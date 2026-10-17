@@ -3,12 +3,7 @@ import { renderPlans, renderPlanEditor } from './plans.js';
 import { renderToday } from './schedule.js';
 import { renderWorkout } from './workout.js';
 import { renderHistory } from './history.js';
-
-function placeholder(title, text) {
-  return (root) => {
-    root.innerHTML = `<h1>${title}</h1><div class="empty">${text}</div>`;
-  };
-}
+import { renderSettings } from './backup.js';
 
 // כל מסך: איזו פונקציה מציירת אותו, ואיזו לשונית בסרגל התחתון מודגשת
 const routes = {
@@ -18,7 +13,7 @@ const routes = {
   plans: { render: (root, id) => (id ? renderPlanEditor(root, id) : renderPlans(root)), tab: 'plans' },
   // #/history → סוגי אימונים, #/history/<אימון> → תאריכים, #/history/<אימון>/<תאריך> → אימון אחד
   history: { render: renderHistory, tab: 'history' },
-  settings: { render: placeholder('הגדרות', 'גיבוי ושחזור יגיעו בשלב 6'), tab: 'settings' },
+  settings: { render: renderSettings, tab: 'settings' },
 };
 
 function router() {

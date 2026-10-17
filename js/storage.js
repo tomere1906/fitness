@@ -130,3 +130,38 @@ export function getLastPerformance(name, planId) {
   };
   return find(sessions.filter((s) => s.planId === planId)) || find(sessions);
 }
+
+// ===== גיבוי =====
+
+// עותק של כל הנתונים, לשמירה בקובץ
+export function exportData() {
+  return JSON.parse(JSON.stringify(data));
+}
+
+// בודק שהנתונים מקובץ הגיבוי במבנה הנכון. זורק שגיאה אם לא
+export function validateBackup(imported) {
+  const valid = imported
+    && Array.isArray(imported.plans)
+    && Array.isArray(imported.sessions)
+    && Array.isArray(imported.schedule) && imported.schedule.length === 7;
+  if (!valid) throw new Error('הקובץ לא נראה כמו גיבוי של האפליקציה');
+}
+
+// מחליף את כל הנתונים בנתונים מקובץ גיבוי
+export function importData(imported) {
+  validateBackup(imported);
+  for (const key of Object.keys(data)) delete data[key];
+  Object.assign(data, emptyData(), imported);
+  save();
+}
+
+// מתי עשית גיבוי בפעם האחרונה (נשמר בנפרד, כי זה לא חלק מהנתונים עצמם)
+const BACKUP_KEY = 'fitness-app:lastBackup';
+
+export function getLastBackup() {
+  return localStorage.getItem(BACKUP_KEY);
+}
+
+export function setLastBackup(iso) {
+  localStorage.setItem(BACKUP_KEY, iso);
+}
