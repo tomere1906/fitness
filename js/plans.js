@@ -1,6 +1,7 @@
 // מסך תוכניות האימון: רשימת האימונים, ועריכה של אימון אחד
 import { getPlans, getPlan, createPlan, deletePlan, planName, save, newId } from './storage.js';
-import { esc, fmtNum, countLabel, stepper, bindSteppers } from './ui.js';
+import { esc, countLabel, stepper, bindSteppers } from './ui.js';
+import { startWorkout } from './workout.js';
 
 // ===== רשימת כל האימונים (#/plans) =====
 export function renderPlans(root) {
@@ -15,6 +16,7 @@ export function renderPlans(root) {
             <div class="plan-card-title">${esc(planName(p))}</div>
             <div class="muted small">${countLabel(p.exercises.length, 'תרגיל אחד', 'תרגילים')}</div>
           </a>
+          <button class="btn btn-primary plan-card-start" data-start="${p.id}">התחל</button>
         </div>`).join('')
       : `<div class="empty">עוד אין אימונים.<br>צור את הראשון!</div>`}
     <button class="btn btn-primary btn-lg btn-block" data-action="new">+ אימון חדש</button>
@@ -23,6 +25,11 @@ export function renderPlans(root) {
   root.querySelector('[data-action="new"]').addEventListener('click', () => {
     const plan = createPlan();
     location.hash = `#/plans/${plan.id}`;
+  });
+
+  root.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-start]');
+    if (btn) startWorkout(btn.dataset.start);
   });
 }
 

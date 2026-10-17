@@ -9,6 +9,8 @@ function emptyData() {
     plans: [],          // תוכניות אימון
     // לוח שבועי: לכל יום (0 = ראשון ... 6 = שבת) מזהה האימון, או null = מנוחה
     schedule: [null, null, null, null, null, null, null],
+    sessions: [],       // אימונים שבוצעו ונשמרו (מהישן לחדש)
+    activeWorkout: null, // אימון שנמצא כרגע בתהליך
   };
 }
 
@@ -76,4 +78,45 @@ export function getSchedule() {
 export function setScheduleDay(day, planId) {
   data.schedule[day] = planId || null;
   save();
+}
+
+// ===== אימון פעיל =====
+// { planId, planName, startedAt,
+//   exercises: [{ name, planned: { sets, reps, weight }, previous, sets: [{ weight, reps, done }] }] }
+
+export function getActiveWorkout() {
+  return data.activeWorkout;
+}
+
+export function setActiveWorkout(workout) {
+  data.activeWorkout = workout;
+  save();
+}
+
+// ===== אימונים שבוצעו =====
+// { id, planId, planName, date, exercises: [{ name, sets: [{ weight, reps }] }] }
+
+export function getSessions() {
+  return data.sessions;
+}
+
+export function addSession(session) {
+  data.sessions.push(session);
+  save();
+}
+
+// התרגיל מזוהה לפי השם, בלי הבדל בין רווחים או אותיות גדולות/קטנות
+export function exerciseKey(name) {
+  return name.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+// הפעם האחרונה שעשית תרגיל מסוים: { date, sets } או null
+export function getLastPerformance(name) {
+  const key = exerciseKey(name);
+  if (!key) return null;
+  for (let i = data.sessions.length - 1; i >= 0; i--) {
+    const ex = data.sessions[i].exercises.find((e) => exerciseKey(e.name) === key);
+    if (ex && ex.sets.length) return { date: data.sessions[i].date, sets: ex.sets };
+  }
+  return null;
 }

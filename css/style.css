@@ -241,6 +241,75 @@ h2 { font-size: 20px; margin: 24px 0 10px; }
 .week-row.is-today .week-day { color: var(--accent); }
 .week-row.is-today .select { border-color: var(--accent); }
 
+.plan-card-start { margin-left: 12px; min-height: 48px; padding: 0 18px; }
+
+.active-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-color: var(--accent);
+}
+.active-banner .btn { min-height: 44px; }
+
+/* ===== אימון פעיל ===== */
+.workout-progress { margin: -10px 0 16px; font-weight: 600; }
+
+.ex-title { font-size: 21px; font-weight: 800; }
+.ex-prev {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+}
+
+/* שורת סט: [מספר הסט / ✓] [משקל] [חזרות] */
+.set-grid {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+.set-head {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+}
+.set-row { padding: 6px 0; border-radius: var(--radius-sm); }
+.set-row .stepper { justify-content: center; min-width: 0; }
+.set-row .stepper + .stepper { margin-top: 0; }
+.set-row .stepper-row { gap: 2px; width: 100%; }
+.set-row .stepper-btn { width: 38px; flex-shrink: 0; }
+.set-row .stepper-input { flex: 1; min-width: 0; width: auto; padding: 0; font-size: 19px; }
+
+.ex { padding: 16px 12px; }
+
+.set-done {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 19px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.set-row.done .set-done {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-size: 24px;
+}
+.set-row.done .stepper-input { color: var(--accent); }
+
+.ex-actions { display: flex; justify-content: space-between; margin-top: 6px; }
+.ex-actions .btn { min-height: 44px; padding: 0 8px; margin: 0; }
+
 /* ===== הודעה קופצת ===== */
 .toast {
   position: fixed;
