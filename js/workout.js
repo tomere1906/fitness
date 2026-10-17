@@ -4,6 +4,7 @@ import {
   addSession, getLastPerformance, newId,
 } from './storage.js';
 import { esc, fmtNum, toast, stepper, bindSteppers, shortDate } from './ui.js';
+import { currentDeclineStreak, DECLINE_ALERT } from './history.js';
 
 // ===== התחלת אימון מתוך תוכנית =====
 export function startWorkout(planId) {
@@ -31,11 +32,12 @@ export function startWorkout(planId) {
     planName: planName(plan),
     startedAt: new Date().toISOString(),
     exercises: plan.exercises.map((ex) => {
-      const last = getLastPerformance(ex.name);
+      const last = getLastPerformance(ex.name, plan.id);
       return {
         name: ex.name.trim() || 'תרגיל ללא שם',
         planned: { sets: ex.sets, reps: ex.reps, weight: ex.weight },
         previous: last,
+        declineStreak: currentDeclineStreak(plan.id, ex.name),
         // כל סט ממולא מראש: מה שעשית בפעם הקודמת, ואם אין - מה שמתוכנן
         sets: Array.from({ length: ex.sets }, (_, j) => {
           const prev = last?.sets[j];
@@ -169,6 +171,8 @@ function exerciseHtml(ex) {
   return `
     <div class="ex-title">${esc(ex.name)}</div>
     <div class="muted small">מתוכנן: ${p.sets} סטים × ${p.reps} חזרות${p.weight ? ` · ${fmtNum(p.weight)} ק״ג` : ''}</div>
+    ${ex.declineStreak >= DECLINE_ALERT ? `
+      <div class="trend-alert small">⚠️ ירידה ב-${ex.declineStreak} האימונים האחרונים ברצף. היום המטרה: לא לרדת.</div>` : ''}
     ${ex.previous ? `
       <div class="ex-prev small">פעם קודמת (${shortDate(ex.previous.date)}): ${formatSets(ex.previous.sets)}</div>` : ''}
 

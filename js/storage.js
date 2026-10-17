@@ -110,31 +110,23 @@ export function exerciseKey(name) {
   return name.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
-// כל התרגילים שאי פעם ביצעת, כל אחד עם רשימת הפעמים (מהישן לחדש):
-// [{ key, name, entries: [{ date, sets }] }]
-export function getExerciseHistory() {
-  const byKey = new Map();
-  const sessions = [...data.sessions].sort((a, b) => a.date.localeCompare(b.date));
-  for (const session of sessions) {
-    for (const ex of session.exercises) {
-      const key = exerciseKey(ex.name);
-      if (!key || !ex.sets.length) continue;
-      if (!byKey.has(key)) byKey.set(key, { key, name: ex.name, entries: [] });
-      const item = byKey.get(key);
-      item.name = ex.name; // מציגים את השם כפי שנכתב בפעם האחרונה
-      item.entries.push({ date: session.date, sets: ex.sets });
-    }
-  }
-  return [...byKey.values()];
+// כל האימונים שבוצעו, מסודרים לפי תאריך (מהישן לחדש)
+export function getSessionsByDate() {
+  return [...data.sessions].sort((a, b) => a.date.localeCompare(b.date));
 }
 
-// הפעם האחרונה שעשית תרגיל מסוים: { date, sets } או null
-export function getLastPerformance(name) {
+// הפעם האחרונה שעשית תרגיל מסוים: { date, sets } או null.
+// קודם מחפשים באותו סוג אימון, ואם אין - בכל אימון אחר
+export function getLastPerformance(name, planId) {
   const key = exerciseKey(name);
   if (!key) return null;
-  for (let i = data.sessions.length - 1; i >= 0; i--) {
-    const ex = data.sessions[i].exercises.find((e) => exerciseKey(e.name) === key);
-    if (ex && ex.sets.length) return { date: data.sessions[i].date, sets: ex.sets };
-  }
-  return null;
+  const sessions = getSessionsByDate().reverse();
+  const find = (list) => {
+    for (const s of list) {
+      const ex = s.exercises.find((e) => exerciseKey(e.name) === key);
+      if (ex && ex.sets.length) return { date: s.date, sets: ex.sets };
+    }
+    return null;
+  };
+  return find(sessions.filter((s) => s.planId === planId)) || find(sessions);
 }
