@@ -34,3 +34,16 @@ function router() {
 
 window.addEventListener('hashchange', router);
 router();
+
+// ===== עבודה בלי אינטרנט (Service Worker) =====
+// במחשב בזמן פיתוח (localhost) הוא כבוי, כדי שכל שינוי בקוד יופיע מיד.
+// כדי לבדוק אותו בכל זאת במחשב - מוסיפים לכתובת ?pwa (למשל http://127.0.0.1:5500/?pwa)
+const isDev = ['localhost', '127.0.0.1'].includes(location.hostname) && !location.search.includes('pwa');
+
+if ('serviceWorker' in navigator) {
+  if (isDev) {
+    navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister()));
+  } else {
+    navigator.serviceWorker.register('sw.js');
+  }
+}
