@@ -7,6 +7,8 @@ function emptyData() {
   return {
     version: 1,
     plans: [],          // תוכניות אימון
+    // לוח שבועי: לכל יום (0 = ראשון ... 6 = שבת) מזהה האימון, או null = מנוחה
+    schedule: [null, null, null, null, null, null, null],
   };
 }
 
@@ -56,9 +58,22 @@ export function createPlan() {
 
 export function deletePlan(id) {
   data.plans = data.plans.filter((p) => p.id !== id);
+  // אימון שנמחק יוצא גם מהלוח השבועי
+  data.schedule = data.schedule.map((planId) => (planId === id ? null : planId));
   save();
 }
 
 export function planName(plan) {
   return plan?.name.trim() || 'אימון ללא שם';
+}
+
+// ===== לוח שבועי =====
+
+export function getSchedule() {
+  return data.schedule;
+}
+
+export function setScheduleDay(day, planId) {
+  data.schedule[day] = planId || null;
+  save();
 }

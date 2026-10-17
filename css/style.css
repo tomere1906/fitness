@@ -223,6 +223,24 @@ h2 { font-size: 20px; margin: 24px 0 10px; }
 .ex-edit-head { display: flex; gap: 8px; margin-bottom: 14px; }
 .ex-edit-head .input { flex: 1; font-weight: 600; }
 
+/* ===== היום והלוח השבועי ===== */
+.today-card { border-color: var(--accent); background: linear-gradient(160deg, var(--accent-soft), var(--surface) 70%); }
+.today-title { font-size: 24px; font-weight: 800; margin: 2px 0; }
+.today-card .btn { margin-top: 14px; }
+
+.week { padding: 6px 16px; }
+.week-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+.week-row + .week-row { border-top: 1px solid var(--border); }
+.week-day { width: 56px; flex-shrink: 0; font-weight: 700; }
+.week-row .select { flex: 1; min-width: 0; }
+.week-row.is-today .week-day { color: var(--accent); }
+.week-row.is-today .select { border-color: var(--accent); }
+
 /* ===== הודעה קופצת ===== */
 .toast {
   position: fixed;
