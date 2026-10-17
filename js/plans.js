@@ -71,6 +71,10 @@ export function renderPlanEditor(root, id) {
           ${stepper({ field: 'sets', value: ex.sets, min: 1, label: 'סטים' })}
           ${stepper({ field: 'reps', value: ex.reps, min: 0, label: 'חזרות' })}
           ${stepper({ field: 'weight', value: ex.weight, step: 2.5, min: 0, decimal: true, label: 'משקל (ק״ג)' })}
+          <div class="ex-move">
+            <button class="btn btn-ghost" data-action="move" data-dir="-1" ${i === 0 ? 'disabled' : ''}>↑ הזז למעלה</button>
+            <button class="btn btn-ghost" data-action="move" data-dir="1" ${i === plan.exercises.length - 1 ? 'disabled' : ''}>↓ הזז למטה</button>
+          </div>
         </div>`).join('')
       : `<div class="empty small">עוד אין תרגילים באימון הזה</div>`;
   }
@@ -95,6 +99,22 @@ export function renderPlanEditor(root, id) {
     const i = Number(stepperEl.closest('.ex-edit').dataset.index);
     plan.exercises[i][stepperEl.dataset.field] = value;
     save();
+  });
+
+  // הזזת תרגיל למעלה / למטה בסדר האימון
+  list.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action="move"]');
+    if (!btn) return;
+    const i = Number(btn.closest('.ex-edit').dataset.index);
+    const to = i + Number(btn.dataset.dir);
+    if (to < 0 || to >= plan.exercises.length) return;
+    [plan.exercises[i], plan.exercises[to]] = [plan.exercises[to], plan.exercises[i]];
+    save();
+    renderExercises();
+    // מראים לאן התרגיל עבר
+    const moved = list.querySelector(`.ex-edit[data-index="${to}"]`);
+    moved.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    moved.classList.add('just-moved');
   });
 
   // מחיקת תרגיל

@@ -377,3 +377,12 @@ h2 { font-size: 20px; margin: 24px 0 10px; }
 .backup-help { line-height: 1.6; }
 .backup-help b { color: var(--text); }
 .nowrap { white-space: nowrap; }
+
+/* ===== הזזת תרגיל בעורך התוכנית ===== */
+.ex-move { display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 6px; }
+.ex-move .btn { min-height: 44px; padding: 0 8px; margin: 0; }
+.btn:disabled { opacity: 0.3; pointer-events: none; }
+.ex-edit.just-moved { animation: just-moved 0.9s ease-out; }
+@keyframes just-moved {
+  from { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+}
