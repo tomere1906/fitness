@@ -1,4 +1,5 @@
 // ניווט בין המסכים לפי החלק שאחרי # בכתובת (למשל #/plans)
+import { renderPlans, renderPlanEditor } from './plans.js';
 
 function placeholder(title, text) {
   return (root) => {
@@ -9,7 +10,8 @@ function placeholder(title, text) {
 // כל מסך: איזו פונקציה מציירת אותו, ואיזו לשונית בסרגל התחתון מודגשת
 const routes = {
   today: { render: placeholder('היום', 'כאן יופיע האימון של היום'), tab: 'today' },
-  plans: { render: placeholder('תוכניות אימון', 'כאן יופיעו תוכניות האימון'), tab: 'plans' },
+  // #/plans → רשימה, #/plans/<id> → עריכת אימון
+  plans: { render: (root, id) => (id ? renderPlanEditor(root, id) : renderPlans(root)), tab: 'plans' },
   history: { render: placeholder('היסטוריה', 'יגיע בשלב 5'), tab: 'history' },
   settings: { render: placeholder('הגדרות', 'גיבוי ושחזור יגיעו בשלב 6'), tab: 'settings' },
 };

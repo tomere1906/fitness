@@ -161,6 +161,68 @@ h2 { font-size: 20px; margin: 24px 0 10px; }
   stroke-linejoin: round;
 }
 
+.icon-btn { width: 52px; min-width: 52px; padding: 0; font-size: 18px; }
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.footer-actions { margin-top: 32px; }
+
+/* ===== בורר מספרים + [ערך] − ===== */
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.stepper + .stepper { margin-top: 10px; }
+.stepper-label { color: var(--text-dim); font-weight: 600; }
+.stepper-row { display: flex; align-items: center; gap: 6px; }
+.stepper-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.stepper-btn:active { background: var(--border); }
+.stepper-input {
+  width: 64px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  direction: ltr;
+}
+.stepper-input:focus { outline: 2px solid var(--accent); background: var(--surface-2); }
+
+/* ===== תוכניות ===== */
+.plan-card { display: flex; align-items: center; gap: 12px; padding: 0; }
+.plan-card-main { flex: 1; padding: 16px; color: inherit; text-decoration: none; }
+.plan-card-title { font-size: 19px; font-weight: 700; }
+
+.ex-edit-head { display: flex; gap: 8px; margin-bottom: 14px; }
+.ex-edit-head .input { flex: 1; font-weight: 600; }
+
 /* ===== הודעה קופצת ===== */
 .toast {
   position: fixed;
