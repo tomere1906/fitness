@@ -15,6 +15,20 @@ export function fmtNum(n) {
   return String(Math.round((Number(n) || 0) * 100) / 100);
 }
 
+export const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+
+// "17.10"
+export function shortDate(iso) {
+  const d = new Date(iso);
+  return `${d.getDate()}.${d.getMonth() + 1}`;
+}
+
+// "שבת 17.10.2026"
+export function longDate(iso) {
+  const d = new Date(iso);
+  return `${DAY_NAMES[d.getDay()]} ${shortDate(iso)}.${d.getFullYear()}`;
+}
+
 // "3 תרגילים" / "תרגיל אחד"
 export function countLabel(n, one, many) {
   return n === 1 ? one : `${n} ${many}`;

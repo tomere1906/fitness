@@ -3,7 +3,7 @@ import {
   getPlan, planName, getActiveWorkout, setActiveWorkout,
   addSession, getLastPerformance, newId,
 } from './storage.js';
-import { esc, fmtNum, toast, stepper, bindSteppers } from './ui.js';
+import { esc, fmtNum, toast, stepper, bindSteppers, shortDate } from './ui.js';
 
 // ===== התחלת אימון מתוך תוכנית =====
 export function startWorkout(planId) {
@@ -196,8 +196,4 @@ function formatSets(sets) {
     return sets[0].weight ? `${fmtNum(sets[0].weight)} ק״ג: ${reps}` : reps;
   }
   return sets.map((s) => `${fmtNum(s.weight)} ק״ג × ${s.reps}`).join(' · ');
-}
-
-function shortDate(iso) {
-  return new Date(iso).toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' });
 }

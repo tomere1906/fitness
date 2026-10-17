@@ -2,6 +2,7 @@
 import { renderPlans, renderPlanEditor } from './plans.js';
 import { renderToday } from './schedule.js';
 import { renderWorkout } from './workout.js';
+import { renderHistory } from './history.js';
 
 function placeholder(title, text) {
   return (root) => {
@@ -15,7 +16,8 @@ const routes = {
   workout: { render: renderWorkout, tab: 'today' },
   // #/plans → רשימה, #/plans/<id> → עריכת אימון
   plans: { render: (root, id) => (id ? renderPlanEditor(root, id) : renderPlans(root)), tab: 'plans' },
-  history: { render: placeholder('היסטוריה', 'יגיע בשלב 5'), tab: 'history' },
+  // #/history → רשימת תרגילים, #/history/<שם> → תרגיל אחד
+  history: { render: renderHistory, tab: 'history' },
   settings: { render: placeholder('הגדרות', 'גיבוי ושחזור יגיעו בשלב 6'), tab: 'settings' },
 };
 

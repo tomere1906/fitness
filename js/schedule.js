@@ -1,9 +1,7 @@
 // מסך "היום": האימון של היום + הלוח השבועי
 import { getPlans, getPlan, planName, getSchedule, setScheduleDay, getActiveWorkout } from './storage.js';
-import { esc, countLabel } from './ui.js';
+import { esc, countLabel, DAY_NAMES } from './ui.js';
 import { startWorkout } from './workout.js';
-
-const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
 export function renderToday(root) {
   const today = new Date().getDay(); // 0 = ראשון

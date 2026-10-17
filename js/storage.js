@@ -110,6 +110,24 @@ export function exerciseKey(name) {
   return name.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
+// כל התרגילים שאי פעם ביצעת, כל אחד עם רשימת הפעמים (מהישן לחדש):
+// [{ key, name, entries: [{ date, sets }] }]
+export function getExerciseHistory() {
+  const byKey = new Map();
+  const sessions = [...data.sessions].sort((a, b) => a.date.localeCompare(b.date));
+  for (const session of sessions) {
+    for (const ex of session.exercises) {
+      const key = exerciseKey(ex.name);
+      if (!key || !ex.sets.length) continue;
+      if (!byKey.has(key)) byKey.set(key, { key, name: ex.name, entries: [] });
+      const item = byKey.get(key);
+      item.name = ex.name; // מציגים את השם כפי שנכתב בפעם האחרונה
+      item.entries.push({ date: session.date, sets: ex.sets });
+    }
+  }
+  return [...byKey.values()];
+}
+
 // הפעם האחרונה שעשית תרגיל מסוים: { date, sets } או null
 export function getLastPerformance(name) {
   const key = exerciseKey(name);
