@@ -114,6 +114,17 @@ export function renderWorkout(root) {
       updateProgress(root, w);
     }
 
+    // סימון כל הסטים בתרגיל בלחיצה אחת (עם הערכים שכבר מופיעים בהם).
+    // אם כולם כבר מסומנים - הלחיצה מבטלת את הסימון
+    if (action === 'all-done') {
+      const { ex, exEl } = where(btn);
+      const markDone = !ex.sets.every((s) => s.done);
+      ex.sets.forEach((s) => { s.done = markDone; });
+      setActiveWorkout(w);
+      exEl.innerHTML = exerciseHtml(ex);
+      updateProgress(root, w);
+    }
+
     if (action === 'add-set') {
       const { ex, exEl } = where(btn);
       const last = ex.sets[ex.sets.length - 1] || ex.planned;
@@ -202,6 +213,10 @@ function exerciseHtml(ex) {
         ${stepper({ field: 'weight', value: s.weight, step: 2.5, decimal: true })}
         ${stepper({ field: 'reps', value: s.reps })}
       </div>`).join('')}
+
+    ${ex.sets.every((s) => s.done)
+      ? `<button class="btn btn-ghost btn-block all-done-btn" data-action="all-done">בטל סימון של כל הסטים</button>`
+      : `<button class="btn btn-soft btn-block all-done-btn" data-action="all-done">${icon('check')} סמן את כל הסטים כבוצעו</button>`}
 
     <div class="ex-actions">
       <button class="btn btn-ghost" data-action="remove-set">− הסר סט</button>
