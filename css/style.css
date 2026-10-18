@@ -1,21 +1,32 @@
 /* ===== צבעים ומשתנים כלליים ===== */
 :root {
-  --bg: #0e1013;
-  --surface: #181b20;
-  --surface-2: #22262d;
-  --border: #2c313a;
-  --text: #f3f5f7;
-  --text-dim: #98a1ae;
-  --accent: #22c55e;          /* צבע המבטא - להחלפה בשורה אחת */
-  --accent-strong: #16a34a;
-  --on-accent: #04230f;
-  --accent-soft: rgba(34, 197, 94, 0.15);
-  --danger: #f05252;
-  --danger-soft: rgba(240, 82, 82, 0.14);
-  --warn: #f5a524;            /* ירידה / אזהרה */
-  --warn-soft: rgba(245, 165, 36, 0.14);
-  --radius: 16px;
-  --radius-sm: 12px;
+  /* רקע כמעט שחור עם נטייה לכחול, וכרטיסים בגוון בהיר במעט */
+  --bg: #07090e;
+  --surface: #10131b;
+  --surface-2: #181c26;
+  --border: rgba(255, 255, 255, 0.07);
+  --text: #f4f6fa;
+  --text-dim: #8a93a6;
+
+  /* ירוק ניאון - צבע המבטא הראשי */
+  --accent: #39ff6a;
+  --accent-strong: #22e055;
+  --on-accent: #03210c;
+  --accent-soft: rgba(57, 255, 106, 0.13);
+  --glow: 0 0 18px rgba(57, 255, 106, 0.35); /* זוהר - רק לאלמנטים חשובים */
+
+  /* צבעי ניאון לאייקונים */
+  --cyan: #2fd8ff;
+  --cyan-soft: rgba(47, 216, 255, 0.13);
+  --orange: #ff7a2f;
+  --orange-soft: rgba(255, 122, 47, 0.14);
+  --danger: #ff4d5e;
+  --danger-soft: rgba(255, 77, 94, 0.14);
+  --warn: #ffb02e;            /* ירידה / אזהרה */
+  --warn-soft: rgba(255, 176, 46, 0.14);
+
+  --radius: 24px;
+  --radius-sm: 14px;
   --tabbar-h: 64px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -40,13 +51,24 @@ body {
   max-width: 640px;
   margin: 0 auto;
   min-height: 100vh;
-  padding: calc(var(--safe-top) + 12px) 16px calc(var(--tabbar-h) + var(--safe-bottom) + 24px);
+  /* safe area: התוכן מתחיל מתחת לשעון ונגמר מעל הסרגל התחתון */
+  padding: calc(var(--safe-top) + 16px) 20px calc(var(--tabbar-h) + var(--safe-bottom) + 32px);
 }
 
-h1 { font-size: 28px; font-weight: 800; margin: 8px 0 16px; }
-h2 { font-size: 20px; margin: 24px 0 10px; }
+h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.01em; margin: 8px 0 20px; }
+h2 { font-size: 21px; font-weight: 800; margin: 28px 0 12px; }
 .muted { color: var(--text-dim); }
 .small { font-size: 14px; }
+
+/* כותרת מסך: כותרת גדולה + שורת משנה באפור */
+.screen-head { margin: 8px 0 24px; }
+.screen-head h1 { margin: 0; }
+.subtitle { color: var(--text-dim); font-size: 17px; margin-top: 2px; }
+
+/* כותרת של קטע, עם אייקון */
+.section-head { display: flex; align-items: center; gap: 10px; margin: 32px 0 14px; }
+.section-head h2 { margin: 0; }
+.section-head .icon { width: 24px; height: 24px; }
 
 /* ===== כרטיס ===== */
 .card {
@@ -54,11 +76,52 @@ h2 { font-size: 20px; margin: 24px 0 10px; }
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 12px;
+  padding: 20px;
+  margin-bottom: 14px;
   color: inherit;
   text-decoration: none;
 }
+
+/* כרטיס בשורה: [אייקון] [טקסט] [משהו בצד] */
+.row-card { display: flex; align-items: center; gap: 16px; }
+.grow { flex: 1; min-width: 0; }
+.card-title { font-size: 18px; font-weight: 700; }
+.card-title-lg { font-size: 22px; font-weight: 800; }
+.label { color: var(--text-dim); font-size: 15px; }
+.card-action { margin-top: 20px; }
+
+/* ===== אייקונים ===== */
+.icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* אייקון בתוך עיגול רך בגוון כהה של אותו צבע */
+.icon-chip {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  font-weight: 700;
+}
+.icon-chip .icon { width: 24px; height: 24px; }
+.chip-green { color: var(--accent); background: var(--accent-soft); }
+.chip-cyan { color: var(--cyan); background: var(--cyan-soft); }
+.chip-orange { color: var(--orange); background: var(--orange-soft); }
+.chip-red { color: var(--danger); background: var(--danger-soft); }
+.chip-muted { color: var(--text-dim); background: var(--surface-2); }
+
+/* ===== מצב ריק ===== */
+.empty-card { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 32px 20px; }
+.empty-card .btn { margin-top: 12px; }
 
 /* ===== כפתורים ===== */
 .btn {
@@ -83,6 +146,9 @@ h2 { font-size: 20px; margin: 24px 0 10px; }
 .btn:active { transform: scale(0.98); }
 .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 800; }
 .btn-primary:active { background: var(--accent-strong); }
+.btn-glow { box-shadow: var(--glow); }
+.btn-sm { min-height: 42px; padding: 0 18px; }
+.btn .icon { width: 20px; height: 20px; }
 .btn-danger { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--text-dim); }
 .btn-block { width: 100%; }
@@ -131,9 +197,9 @@ h2 { font-size: 20px; margin: 24px 0 10px; }
   z-index: 10;
   display: flex;
   justify-content: center;
-  background: rgba(20, 23, 28, 0.92);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: rgba(9, 11, 17, 0.9);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   border-top: 1px solid var(--border);
   padding-bottom: var(--safe-bottom);
 }
@@ -153,6 +219,7 @@ h2 { font-size: 20px; margin: 24px 0 10px; }
   touch-action: manipulation;
 }
 .tabbar a.active { color: var(--accent); }
+.tabbar a.active svg { filter: drop-shadow(0 0 6px rgba(57, 255, 106, 0.6)); }
 .tabbar svg {
   width: 26px;
   height: 26px;
@@ -226,33 +293,52 @@ h2 { font-size: 20px; margin: 24px 0 10px; }
 .ex-edit-head .input { flex: 1; font-weight: 600; }
 
 /* ===== היום והלוח השבועי ===== */
-.today-card { border-color: var(--accent); background: linear-gradient(160deg, var(--accent-soft), var(--surface) 70%); }
-.today-title { font-size: 24px; font-weight: 800; margin: 2px 0; }
-.today-card .btn { margin-top: 14px; }
 
-.week { padding: 6px 16px; }
-.week-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
+/* עיגול התקדמות */
+.ring { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 6; }
+.ring-track { stroke: var(--surface-2); }
+.ring-fill {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 4px rgba(57, 255, 106, 0.55));
 }
-.week-row + .week-row { border-top: 1px solid var(--border); }
-.week-day { width: 56px; flex-shrink: 0; font-weight: 700; }
-.week-row .select { flex: 1; min-width: 0; }
-.week-row.is-today .week-day { color: var(--accent); }
-.week-row.is-today .select { border-color: var(--accent); }
+.ring-text { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: 15px; }
+
+/* שורת יום בלוח השבועי */
+.day-row { position: relative; padding: 16px 20px; margin-bottom: 10px; }
+.day-name { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.label.is-rest { font-style: italic; opacity: 0.8; }
+.day-edit { color: var(--text-dim); }
+.day-select {
+  /* שקוף ומכסה את כל הכרטיס - לחיצה בכל מקום פותחת את הבחירה */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  font-size: 16px;
+  cursor: pointer;
+}
+.day-row:active { background: var(--surface-2); }
+
+/* היום הנוכחי: מסגרת ירוקה זוהרת ותגית "היום" */
+.day-row.is-today {
+  border-color: var(--accent);
+  box-shadow: 0 0 14px rgba(57, 255, 106, 0.2), inset 0 0 14px rgba(57, 255, 106, 0.05);
+}
+.day-row.is-today .day-name { color: var(--accent); }
+.tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 10px;
+  border-radius: 999px;
+}
 
 .plan-card-start { margin-left: 12px; min-height: 48px; padding: 0 18px; }
-
-.active-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-color: var(--accent);
-}
-.active-banner .btn { min-height: 44px; }
 
 /* ===== אימון פעיל ===== */
 .workout-progress { margin: -10px 0 16px; font-weight: 600; }

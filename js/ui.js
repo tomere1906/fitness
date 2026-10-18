@@ -15,7 +15,28 @@ export function fmtNum(n) {
   return String(Math.round((Number(n) || 0) * 100) / 100);
 }
 
-export const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+// ===== אייקונים (קווים דקים, בצבע הטקסט שסביבם) =====
+const ICONS = {
+  dumbbell: '<path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/>',
+  flame: '<path d="M12 3c.8 3.2 5 5.4 5 10a5 5 0 0 1-10 0c0-2.1 1-3.6 2.2-4.6.1 1.6.8 2.7 1.9 3.1C11 8.6 11 6 12 3z"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>',
+  bolt: '<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>',
+  pencil: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+};
+
+export function icon(name) {
+  return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
+}
+
+// אייקון בתוך עיגול רך. color: green / cyan / orange / red / muted
+export function iconChip(name, color = 'green') {
+  return `<span class="icon-chip chip-${color}">${icon(name)}</span>`;
+}
+
+export const DAY_NAMES =['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
 // "17.10"
 export function shortDate(iso) {
