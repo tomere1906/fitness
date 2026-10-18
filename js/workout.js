@@ -3,7 +3,9 @@ import {
   getPlan, planName, getActiveWorkout, setActiveWorkout,
   addSession, getLastPerformance, newId,
 } from './storage.js';
-import { esc, fmtNum, toast, stepper, bindSteppers, shortDate } from './ui.js';
+import {
+  esc, fmtNum, toast, stepper, bindSteppers, shortDate, icon, iconChip, screenHead, emptyCard,
+} from './ui.js';
 import { currentDeclineStreak, DECLINE_ALERT } from './history.js';
 
 // ===== התחלת אימון מתוך תוכנית =====
@@ -57,19 +59,25 @@ export function startWorkout(planId) {
 export function renderWorkout(root) {
   const w = getActiveWorkout();
   if (!w) {
-    root.innerHTML = `<div class="empty">אין אימון פעיל כרגע</div>
-      <a class="btn btn-primary btn-block" href="#/today">למסך היום</a>`;
+    root.innerHTML = emptyCard('dumbbell', 'אין אימון פעיל כרגע', 'התחל אימון ממסך "היום" או מלשונית "תוכניות".',
+      `<a class="btn btn-primary" href="#/today">למסך היום</a>`);
     return;
   }
 
   root.innerHTML = `
-    <h1>${esc(w.planName)}</h1>
-    <div class="workout-progress muted" id="progress"></div>
+    ${screenHead(esc(w.planName), 'אימון בתהליך · הכול נשמר תוך כדי')}
+    <div class="card progress-card">
+      <div class="progress-top">
+        <span class="label">התקדמות</span>
+        <span class="progress-count" id="progress"></span>
+      </div>
+      <div class="bar"><div class="bar-fill" id="progress-bar"></div></div>
+    </div>
     ${w.exercises.map((ex, i) => `
       <section class="card ex" data-ex="${i}">${exerciseHtml(ex)}</section>`).join('')}
     <div class="footer-actions">
-      <button class="btn btn-primary btn-lg btn-block" data-action="finish">סיים ושמור אימון</button>
-      <button class="btn btn-danger btn-block" data-action="cancel">בטל אימון</button>
+      <button class="btn btn-primary btn-lg btn-block btn-glow" data-action="finish">${icon('check')} סיים ושמור אימון</button>
+      <button class="btn btn-danger btn-block" data-action="cancel">${icon('x')} בטל אימון</button>
     </div>
   `;
   updateProgress(root, w);
@@ -99,7 +107,10 @@ export function renderWorkout(root) {
       set.done = !set.done;
       setActiveWorkout(w);
       btn.closest('.set-row').classList.toggle('done', set.done);
-      btn.textContent = set.done ? '✓' : j + 1;
+      btn.innerHTML = set.done ? icon('check') : j + 1;
+      // כשכל הסטים בתרגיל בוצעו - האייקון שלו נצבע בירוק
+      const chip = btn.closest('.ex').querySelector('.ex-head .icon-chip');
+      chip.className = `icon-chip chip-${ex.sets.every((s) => s.done) ? 'green' : 'muted'}`;
       updateProgress(root, w);
     }
 
@@ -162,17 +173,23 @@ function finishWorkout(w) {
 function updateProgress(root, w) {
   const all = w.exercises.flatMap((ex) => ex.sets);
   const done = all.filter((s) => s.done).length;
-  root.querySelector('#progress').textContent = `${done} מתוך ${all.length} סטים בוצעו`;
+  root.querySelector('#progress').innerHTML = `<span dir="ltr">${done} / ${all.length}</span> סטים`;
+  root.querySelector('#progress-bar').style.width = `${(done / all.length) * 100}%`;
 }
 
 // ===== HTML של תרגיל אחד =====
 function exerciseHtml(ex) {
   const p = ex.planned;
   return `
-    <div class="ex-title">${esc(ex.name)}</div>
-    <div class="muted small">מתוכנן: ${p.sets} סטים × ${p.reps} חזרות${p.weight ? ` · ${fmtNum(p.weight)} ק״ג` : ''}</div>
+    <div class="row-card ex-head">
+      ${iconChip('dumbbell', ex.sets.every((s) => s.done) ? 'green' : 'muted')}
+      <div class="grow">
+        <div class="card-title">${esc(ex.name)}</div>
+        <div class="label">מתוכנן: ${p.sets} סטים × ${p.reps} חזרות${p.weight ? ` · ${fmtNum(p.weight)} ק״ג` : ''}</div>
+      </div>
+    </div>
     ${ex.declineStreak >= DECLINE_ALERT ? `
-      <div class="trend-alert small">⚠️ ירידה ב-${ex.declineStreak} האימונים האחרונים ברצף. היום המטרה: לא לרדת.</div>` : ''}
+      <div class="trend-alert small">${icon('alert')} ירידה ב-${ex.declineStreak} האימונים האחרונים ברצף. היום המטרה: לא לרדת.</div>` : ''}
     ${ex.previous ? `
       <div class="ex-prev small">פעם קודמת (${shortDate(ex.previous.date)}): ${formatSets(ex.previous.sets)}</div>` : ''}
 
@@ -181,7 +198,7 @@ function exerciseHtml(ex) {
     </div>
     ${ex.sets.map((s, j) => `
       <div class="set-grid set-row ${s.done ? 'done' : ''}" data-set="${j}">
-        <button class="set-done" data-action="toggle" aria-label="סט ${j + 1} - סמן כבוצע">${s.done ? '✓' : j + 1}</button>
+        <button class="set-done" data-action="toggle" aria-label="סט ${j + 1} - סמן כבוצע">${s.done ? icon('check') : j + 1}</button>
         ${stepper({ field: 'weight', value: s.weight, step: 2.5, decimal: true })}
         ${stepper({ field: 'reps', value: s.reps })}
       </div>`).join('')}

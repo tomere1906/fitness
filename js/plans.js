@@ -1,6 +1,8 @@
 // מסך תוכניות האימון: רשימת האימונים, ועריכה של אימון אחד
 import { getPlans, getPlan, createPlan, deletePlan, planName, save, newId } from './storage.js';
-import { esc, countLabel, stepper, bindSteppers } from './ui.js';
+import {
+  esc, countLabel, stepper, bindSteppers, icon, iconChip, backLink, screenHead, emptyCard,
+} from './ui.js';
 import { startWorkout } from './workout.js';
 
 // ===== רשימת כל האימונים (#/plans) =====
@@ -8,18 +10,21 @@ export function renderPlans(root) {
   const plans = getPlans();
 
   root.innerHTML = `
-    <h1>תוכניות אימון</h1>
+    ${screenHead('תוכניות', 'בנה ונהל את האימונים שלך')}
     ${plans.length
       ? plans.map((p) => `
-        <div class="card plan-card">
-          <a class="plan-card-main" href="#/plans/${p.id}">
-            <div class="plan-card-title">${esc(planName(p))}</div>
-            <div class="muted small">${countLabel(p.exercises.length, 'תרגיל אחד', 'תרגילים')}</div>
+        <div class="card row-card">
+          <a class="row-card grow plan-link" href="#/plans/${p.id}">
+            ${iconChip('dumbbell', 'green')}
+            <div class="grow">
+              <div class="card-title">${esc(planName(p))}</div>
+              <div class="label">${countLabel(p.exercises.length, 'תרגיל אחד', 'תרגילים')}</div>
+            </div>
           </a>
-          <button class="btn btn-primary plan-card-start" data-start="${p.id}">התחל</button>
+          <button class="btn btn-sm btn-primary" data-start="${p.id}">${icon('play')} התחל</button>
         </div>`).join('')
-      : `<div class="empty">עוד אין אימונים.<br>צור את הראשון!</div>`}
-    <button class="btn btn-primary btn-lg btn-block" data-action="new">+ אימון חדש</button>
+      : emptyCard('dumbbell', 'עוד אין אימונים', 'צור את האימון הראשון שלך, למשל "אימון A - חזה וגב".')}
+    <button class="btn btn-dashed btn-lg btn-block" data-action="new">${icon('plus')} אימון חדש</button>
   `;
 
   root.querySelector('[data-action="new"]').addEventListener('click', () => {
@@ -37,24 +42,25 @@ export function renderPlans(root) {
 export function renderPlanEditor(root, id) {
   const plan = getPlan(id);
   if (!plan) {
-    root.innerHTML = `<div class="empty">האימון לא נמצא</div>
-      <a class="btn btn-block" href="#/plans">חזרה לתוכניות</a>`;
+    root.innerHTML = `${backLink('#/plans', 'תוכניות')}
+      ${emptyCard('dumbbell', 'האימון לא נמצא', 'ייתכן שהוא נמחק.')}`;
     return;
   }
 
   root.innerHTML = `
-    <a class="back-link" href="#/plans">→ תוכניות</a>
-    <label class="field">
+    ${backLink('#/plans', 'תוכניות')}
+    ${screenHead('עריכת אימון', 'כל שינוי נשמר אוטומטית')}
+    <label class="card field-card">
       <span class="field-label">שם האימון</span>
       <input class="input" id="plan-name" value="${esc(plan.name)}"
              placeholder='למשל "אימון A - חזה וגב"' enterkeyhint="done">
     </label>
-    <h2>תרגילים</h2>
+    <div class="section-head">${icon('list')}<h2>תרגילים</h2></div>
     <div id="exercises"></div>
-    <button class="btn btn-block" data-action="add-ex">+ הוסף תרגיל</button>
+    <button class="btn btn-dashed btn-block" data-action="add-ex">${icon('plus')} הוסף תרגיל</button>
     <div class="footer-actions">
-      <a class="btn btn-primary btn-lg btn-block" href="#/plans">סיום</a>
-      <button class="btn btn-danger btn-block" data-action="delete-plan">מחק את האימון</button>
+      <a class="btn btn-primary btn-lg btn-block" href="#/plans">${icon('check')} סיום</a>
+      <button class="btn btn-danger btn-block" data-action="delete-plan">${icon('trash')} מחק את האימון</button>
     </div>
   `;
 
@@ -65,8 +71,9 @@ export function renderPlanEditor(root, id) {
       ? plan.exercises.map((ex, i) => `
         <div class="card ex-edit" data-index="${i}">
           <div class="ex-edit-head">
+            <span class="ex-num">${i + 1}</span>
             <input class="input ex-name" value="${esc(ex.name)}" placeholder="שם התרגיל" enterkeyhint="done">
-            <button class="btn btn-danger icon-btn" data-action="del-ex" aria-label="מחק תרגיל">✕</button>
+            <button class="btn btn-danger icon-btn" data-action="del-ex" aria-label="מחק תרגיל">${icon('x')}</button>
           </div>
           ${stepper({ field: 'sets', value: ex.sets, min: 1, label: 'סטים' })}
           ${stepper({ field: 'reps', value: ex.reps, min: 0, label: 'חזרות' })}
@@ -76,7 +83,7 @@ export function renderPlanEditor(root, id) {
             <button class="btn btn-ghost" data-action="move" data-dir="1" ${i === plan.exercises.length - 1 ? 'disabled' : ''}>↓ הזז למטה</button>
           </div>
         </div>`).join('')
-      : `<div class="empty small">עוד אין תרגילים באימון הזה</div>`;
+      : emptyCard('list', 'עוד אין תרגילים', 'הוסף את התרגיל הראשון עם הכפתור למטה.');
   }
   renderExercises();
 

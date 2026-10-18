@@ -25,6 +25,17 @@ const ICONS = {
   bolt: '<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>',
   pencil: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  chevron: '<path d="M15 6l-6 6 6 6"/>', // מצביע שמאלה = "קדימה" בעברית
+  back: '<path d="M9 6l6 6-6 6"/>',
+  chart: '<path d="M4 19V5M4 19h16"/><path d="M8 15l4-4 3 3 5-6"/>',
+  alert: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.5v.01"/>',
+  download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  upload: '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',
+  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>',
+  list: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>',
 };
 
 export function icon(name) {
@@ -36,7 +47,32 @@ export function iconChip(name, color = 'green') {
   return `<span class="icon-chip chip-${color}">${icon(name)}</span>`;
 }
 
-export const DAY_NAMES =['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+// קישור "חזרה" בראש מסך פנימי
+export function backLink(href, text) {
+  return `<a class="back-link" href="${href}">${icon('back')} ${text}</a>`;
+}
+
+// כותרת מסך: כותרת גדולה + שורת משנה
+export function screenHead(title, subtitle = '') {
+  return `
+    <header class="screen-head">
+      <h1>${title}</h1>
+      ${subtitle ? `<div class="subtitle">${subtitle}</div>` : ''}
+    </header>`;
+}
+
+// כרטיס למצב ריק: אייקון, כותרת, הסבר, ואולי כפתור
+export function emptyCard(iconName, title, text, actionHtml = '') {
+  return `
+    <div class="card empty-card">
+      ${iconChip(iconName, 'muted')}
+      <div class="card-title">${title}</div>
+      <div class="label">${text}</div>
+      ${actionHtml}
+    </div>`;
+}
+
+export const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
 // "17.10"
 export function shortDate(iso) {

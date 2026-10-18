@@ -84,6 +84,7 @@ h2 { font-size: 21px; font-weight: 800; margin: 28px 0 12px; }
 
 /* כרטיס בשורה: [אייקון] [טקסט] [משהו בצד] */
 .row-card { display: flex; align-items: center; gap: 16px; }
+a.row-card { color: inherit; text-decoration: none; }
 .grow { flex: 1; min-width: 0; }
 .card-title { font-size: 18px; font-weight: 700; }
 .card-title-lg { font-size: 22px; font-weight: 800; }
@@ -154,6 +155,8 @@ h2 { font-size: 21px; font-weight: 800; margin: 28px 0 12px; }
 .btn-block { width: 100%; }
 .btn-lg { min-height: 60px; font-size: 19px; }
 .btn + .btn { margin-top: 10px; }
+.btn-dashed { background: transparent; border: 1.5px dashed rgba(255, 255, 255, 0.16); color: var(--text-dim); }
+.btn-dashed:active { border-color: var(--accent); color: var(--accent); }
 
 /* ===== שדות קלט ===== */
 .field { display: block; margin-bottom: 12px; }
@@ -184,9 +187,6 @@ h2 { font-size: 21px; font-weight: 800; margin: 28px 0 12px; }
   background-size: 18px;
   background-position: left 14px center;
 }
-
-/* ===== מצב ריק ===== */
-.empty { text-align: center; padding: 40px 16px; color: var(--text-dim); }
 
 /* ===== סרגל ניווט תחתון ===== */
 .tabbar {
@@ -230,17 +230,22 @@ h2 { font-size: 21px; font-weight: 800; margin: 28px 0 12px; }
   stroke-linejoin: round;
 }
 
-.icon-btn { width: 52px; min-width: 52px; padding: 0; font-size: 18px; }
+.icon-btn { width: 52px; min-width: 52px; padding: 0; }
 .back-link {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   min-height: 44px;
   color: var(--text-dim);
   text-decoration: none;
   font-weight: 600;
-  margin-bottom: 4px;
 }
+.back-link .icon { width: 20px; height: 20px; }
 .footer-actions { margin-top: 32px; }
+.chevron { color: var(--text-dim); display: grid; }
+
+/* כרטיס עם שדה טקסט */
+.field-card { display: block; }
 
 /* ===== בורר מספרים + [ערך] − ===== */
 .stepper {
@@ -249,13 +254,13 @@ h2 { font-size: 21px; font-weight: 800; margin: 28px 0 12px; }
   justify-content: space-between;
   gap: 12px;
 }
-.stepper + .stepper { margin-top: 10px; }
+.stepper + .stepper { margin-top: 12px; }
 .stepper-label { color: var(--text-dim); font-weight: 600; }
 .stepper-row { display: flex; align-items: center; gap: 6px; }
 .stepper-btn {
   width: 48px;
   height: 48px;
-  border-radius: var(--radius-sm);
+  border-radius: 50%;
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);
@@ -268,7 +273,7 @@ h2 { font-size: 21px; font-weight: 800; margin: 28px 0 12px; }
   -webkit-user-select: none;
   user-select: none;
 }
-.stepper-btn:active { background: var(--border); }
+.stepper-btn:active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 .stepper-input {
   width: 64px;
   height: 48px;
@@ -277,20 +282,35 @@ h2 { font-size: 21px; font-weight: 800; margin: 28px 0 12px; }
   background: transparent;
   color: var(--text);
   font: inherit;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 21px;
+  font-weight: 800;
   text-align: center;
   direction: ltr;
 }
 .stepper-input:focus { outline: 2px solid var(--accent); background: var(--surface-2); }
 
-/* ===== תוכניות ===== */
-.plan-card { display: flex; align-items: center; gap: 12px; padding: 0; }
-.plan-card-main { flex: 1; padding: 16px; color: inherit; text-decoration: none; }
-.plan-card-title { font-size: 19px; font-weight: 700; }
+/* ===== עורך התוכנית ===== */
+.ex-edit-head { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.ex-edit-head .input { flex: 1; min-width: 0; font-weight: 700; }
+.ex-num {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
 
-.ex-edit-head { display: flex; gap: 8px; margin-bottom: 14px; }
-.ex-edit-head .input { flex: 1; font-weight: 600; }
+.ex-move { display: flex; justify-content: space-between; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 8px; }
+.ex-move .btn { min-height: 44px; padding: 0 8px; margin: 0; }
+.btn:disabled { opacity: 0.3; pointer-events: none; }
+.ex-edit.just-moved { animation: just-moved 0.9s ease-out; }
+@keyframes just-moved {
+  from { border-color: var(--accent); box-shadow: 0 0 14px rgba(57, 255, 106, 0.3); }
+}
 
 /* ===== היום והלוח השבועי ===== */
 
@@ -338,16 +358,27 @@ h2 { font-size: 21px; font-weight: 800; margin: 28px 0 12px; }
   border-radius: 999px;
 }
 
-.plan-card-start { margin-left: 12px; min-height: 48px; padding: 0 18px; }
-
 /* ===== אימון פעיל ===== */
-.workout-progress { margin: -10px 0 16px; font-weight: 600; }
 
-.ex-title { font-size: 21px; font-weight: 800; }
+/* פס התקדמות */
+.progress-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.progress-count { font-weight: 800; font-size: 18px; }
+.bar { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.bar-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(57, 255, 106, 0.6);
+  transition: width 0.3s ease;
+}
+
+.ex { padding: 20px 14px; }
+.ex-head { margin-bottom: 4px; }
 .ex-prev {
-  margin-top: 8px;
-  padding: 8px 12px;
-  border-radius: 10px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--text-dim);
 }
@@ -360,48 +391,45 @@ h2 { font-size: 21px; font-weight: 800; margin: 28px 0 12px; }
   align-items: center;
 }
 .set-head {
-  margin: 14px 0 6px;
+  margin: 18px 0 6px;
   font-size: 13px;
   color: var(--text-dim);
   text-align: center;
 }
-.set-row { padding: 6px 0; border-radius: var(--radius-sm); }
+.set-row { padding: 6px 0; }
 .set-row .stepper { justify-content: center; min-width: 0; }
 .set-row .stepper + .stepper { margin-top: 0; }
 .set-row .stepper-row { gap: 2px; width: 100%; }
-.set-row .stepper-btn { width: 38px; flex-shrink: 0; }
+.set-row .stepper-btn { width: 38px; height: 44px; border-radius: 12px; flex-shrink: 0; }
 .set-row .stepper-input { flex: 1; min-width: 0; width: auto; padding: 0; font-size: 19px; }
-
-.ex { padding: 16px 12px; }
 
 .set-done {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 2px solid var(--border);
+  border: 2px solid rgba(255, 255, 255, 0.14);
   background: transparent;
   color: var(--text);
   font: inherit;
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 800;
+  display: grid;
+  place-items: center;
   cursor: pointer;
   touch-action: manipulation;
 }
+.set-done .icon { width: 26px; height: 26px; stroke-width: 3; }
 .set-row.done .set-done {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--on-accent);
-  font-size: 24px;
 }
 .set-row.done .stepper-input { color: var(--accent); }
 
-.ex-actions { display: flex; justify-content: space-between; margin-top: 6px; }
+.ex-actions { display: flex; justify-content: space-between; margin-top: 8px; }
 .ex-actions .btn { min-height: 44px; padding: 0 8px; margin: 0; }
 
-/* ===== היסטוריה ===== */
-.history-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.chevron { font-size: 28px; color: var(--text-dim); line-height: 1; }
-
+/* ===== היסטוריה ומגמות ===== */
 .trend-up { color: var(--accent); font-weight: 700; }
 .trend-same { color: var(--text-dim); font-weight: 700; }
 .trend-down { color: var(--warn); font-weight: 700; }
@@ -409,7 +437,7 @@ h2 { font-size: 21px; font-weight: 800; margin: 28px 0 12px; }
 .trend-badge {
   flex-shrink: 0;
   font-size: 14px;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
   background: var(--surface-2);
 }
@@ -417,27 +445,51 @@ h2 { font-size: 21px; font-weight: 800; margin: 28px 0 12px; }
 .trend-badge.trend-down { background: var(--warn-soft); }
 
 .trend-alert {
-  margin: 8px 0;
-  padding: 8px 12px;
-  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
   background: var(--warn-soft);
   color: var(--warn);
   font-weight: 600;
 }
+.trend-alert .icon { width: 20px; height: 20px; }
 
-.session-ex-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-.prev-line { margin: 12px 0 6px; }
+.session-ex-head { margin-bottom: 14px; }
+.prev-line { margin: 16px 0 8px; }
 
-.set-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.set-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .set-chip {
   background: var(--surface-2);
-  border-radius: 8px;
-  padding: 4px 10px;
+  border-radius: 10px;
+  padding: 6px 12px;
   font-size: 15px;
   color: var(--text-dim);
 }
 .set-chip b { color: var(--text); }
 .set-chips-dim .set-chip { opacity: 0.6; }
+
+/* ===== הגדרות / גיבוי ===== */
+.backup-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-size: 15px;
+}
+.backup-status .icon { width: 18px; height: 18px; color: var(--accent); }
+.backup-status.is-stale { background: var(--warn-soft); color: var(--warn); }
+.backup-status.is-stale .icon { color: var(--warn); }
+.backup-actions { margin-top: 18px; }
+.backup-help { align-items: flex-start; line-height: 1.6; }
+.backup-help b { color: var(--text); }
+.nowrap { white-space: nowrap; }
 
 /* ===== הודעה קופצת ===== */
 .toast {
@@ -446,29 +498,16 @@ h2 { font-size: 21px; font-weight: 800; margin: 28px 0 12px; }
   bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 16px);
   transform: translateX(-50%);
   z-index: 20;
-  background: var(--text);
-  color: var(--bg);
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--accent);
   font-weight: 700;
-  padding: 12px 20px;
+  padding: 12px 22px;
   border-radius: 999px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 14px rgba(57, 255, 106, 0.25);
+  white-space: nowrap;
   animation: toast-in 0.2s ease-out;
 }
 @keyframes toast-in {
   from { opacity: 0; transform: translate(-50%, 10px); }
-}
-
-/* ===== הגדרות / גיבוי ===== */
-.backup-actions { margin-top: 16px; }
-.backup-help { line-height: 1.6; }
-.backup-help b { color: var(--text); }
-.nowrap { white-space: nowrap; }
-
-/* ===== הזזת תרגיל בעורך התוכנית ===== */
-.ex-move { display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 6px; }
-.ex-move .btn { min-height: 44px; padding: 0 8px; margin: 0; }
-.btn:disabled { opacity: 0.3; pointer-events: none; }
-.ex-edit.just-moved { animation: just-moved 0.9s ease-out; }
-@keyframes just-moved {
-  from { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 }

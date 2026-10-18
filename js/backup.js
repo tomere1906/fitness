@@ -1,6 +1,6 @@
 // מסך הגדרות: גיבוי (ייצוא לקובץ) ושחזור (ייבוא מקובץ)
 import { exportData, importData, validateBackup, getLastBackup, setLastBackup } from './storage.js';
-import { countLabel, longDate, toast } from './ui.js';
+import { countLabel, longDate, toast, icon, iconChip, screenHead } from './ui.js';
 
 // אחרי כמה ימים בלי גיבוי מציגים תזכורת
 const REMIND_AFTER_DAYS = 7;
@@ -8,35 +8,46 @@ const REMIND_AFTER_DAYS = 7;
 export function renderSettings(root) {
   const d = exportData();
   const last = getLastBackup();
-  const days = last ? Math.floor((Date.now() - new Date(last)) / 86400000) : null;
+  // כמה ימים קלנדריים עברו (גיבוי אתמול ב-23:00 = "אתמול", גם אם עברו רק שעתיים)
+  const midnight = (d) => new Date(d).setHours(0, 0, 0, 0);
+  const days = last ? Math.round((midnight(Date.now()) - midnight(last)) / 86400000) : null;
   const needsBackup = d.sessions.length > 0 && (days === null || days >= REMIND_AFTER_DAYS);
 
   root.innerHTML = `
-    <h1>הגדרות</h1>
+    ${screenHead('הגדרות', 'גיבוי ושחזור של הנתונים שלך')}
 
-    <h2>גיבוי ושחזור</h2>
     <div class="card">
-      <div class="plan-card-title">
-        ${countLabel(d.plans.length, 'תוכנית אחת', 'תוכניות')} ·
-        ${countLabel(d.sessions.length, 'אימון שמור אחד', 'אימונים שמורים')}
+      <div class="row-card">
+        ${iconChip('download', 'cyan')}
+        <div class="grow">
+          <div class="card-title">גיבוי</div>
+          <div class="label">
+            ${countLabel(d.plans.length, 'תוכנית אחת', 'תוכניות')} ·
+            ${countLabel(d.sessions.length, 'אימון שמור אחד', 'אימונים שמורים')}
+          </div>
+        </div>
       </div>
-      <div class="muted small">
-        גיבוי אחרון: ${last ? `${longDate(last)} (${daysLabel(days)})` : 'עוד לא גיבית'}
+
+      <div class="backup-status ${needsBackup ? 'is-stale' : ''}">
+        ${needsBackup ? icon('alert') : icon('check')}
+        <span>גיבוי אחרון: ${last ? `${longDate(last)} (${daysLabel(days)})` : 'עוד לא גיבית'}</span>
       </div>
-      ${needsBackup ? `<div class="trend-alert small">⚠️ כדאי לגבות עכשיו</div>` : ''}
 
       <div class="backup-actions">
-        <button class="btn btn-primary btn-lg btn-block" data-action="export">ייצוא לקובץ</button>
-        <button class="btn btn-block" data-action="import">ייבוא מקובץ</button>
+        <button class="btn btn-primary btn-lg btn-block ${needsBackup ? 'btn-glow' : ''}" data-action="export">${icon('download')} ייצוא לקובץ</button>
+        <button class="btn btn-block" data-action="import">${icon('upload')} ייבוא מקובץ</button>
       </div>
       <input type="file" id="import-file" accept=".json,application/json" hidden>
     </div>
 
-    <div class="card muted small backup-help">
-      <b>ייצוא</b> יוצר קובץ עם כל הנתונים: תוכניות, לוח שבועי וכל האימונים.
-      שמור אותו במקום בטוח, למשל <span class="nowrap">ב-iCloud Drive</span>, או שלח אותו לעצמך.<br><br>
-      <b>ייבוא</b> טוען קובץ גיבוי <b>ומחליף</b> את כל הנתונים שיש עכשיו במכשיר הזה.
-      כך גם מעבירים נתונים ממכשיר למכשיר.
+    <div class="card row-card backup-help">
+      ${iconChip('info', 'muted')}
+      <div class="grow label">
+        <b>ייצוא</b> יוצר קובץ עם כל הנתונים: תוכניות, לוח שבועי וכל האימונים.
+        שמור אותו במקום בטוח, למשל <span class="nowrap">ב-iCloud Drive</span>, או שלח אותו לעצמך.<br><br>
+        <b>ייבוא</b> טוען קובץ גיבוי <b>ומחליף</b> את כל הנתונים שיש עכשיו במכשיר הזה.
+        כך גם מעבירים נתונים ממכשיר למכשיר.
+      </div>
     </div>
   `;
 

@@ -1,7 +1,9 @@
 // מסך היסטוריה: סוגי אימונים → תאריכים → התרגילים והמשקלים באותו אימון.
 // המטרה: לראות שאתה עקבי, ולזהות תרגיל שיורד כמה פעמים ברצף.
 import { getSessionsByDate, getPlan, exerciseKey } from './storage.js';
-import { esc, fmtNum, countLabel, shortDate, longDate } from './ui.js';
+import {
+  esc, fmtNum, countLabel, shortDate, longDate, icon, iconChip, backLink, screenHead, emptyCard,
+} from './ui.js';
 
 // אחרי כמה ירידות ברצף מתריעים
 export const DECLINE_ALERT = 2;
@@ -91,20 +93,21 @@ function renderPlanList(root, history) {
   const plans = history.sort((a, b) => lastDate(b).localeCompare(lastDate(a)));
 
   root.innerHTML = `
-    <h1>היסטוריה</h1>
+    ${screenHead('היסטוריה', 'עקביות היא המטרה: האם אתה שומר על הביצועים?')}
     ${plans.length
       ? plans.map((p) => `
-        <a class="card history-card" href="#/history/${encodeURIComponent(p.planId)}">
-          <div>
-            <div class="plan-card-title">${esc(p.name)}</div>
-            <div class="muted small">${countLabel(p.sessions.length, 'אימון אחד', 'אימונים')} · אחרון ${shortDate(lastDate(p))}</div>
+        <a class="card row-card" href="#/history/${encodeURIComponent(p.planId)}">
+          ${iconChip(p.warnings.length ? 'alert' : 'chart', p.warnings.length ? 'orange' : 'green')}
+          <div class="grow">
+            <div class="card-title">${esc(p.name)}</div>
+            <div class="label">${countLabel(p.sessions.length, 'אימון אחד', 'אימונים')} · אחרון ${shortDate(lastDate(p))}</div>
             ${p.warnings.length
-              ? `<div class="trend-down small">⚠️ ${countLabel(p.warnings.length, 'תרגיל אחד', 'תרגילים')} בירידה רציפה</div>`
-              : ''}
+              ? `<div class="trend-down small">${countLabel(p.warnings.length, 'תרגיל אחד', 'תרגילים')} בירידה רציפה</div>`
+              : '<div class="trend-up small">עקבי ✓</div>'}
           </div>
-          <span class="chevron">‹</span>
+          <span class="chevron">${icon('chevron')}</span>
         </a>`).join('')
-      : `<div class="empty">עוד אין היסטוריה.<br>אחרי שתשמור אימון, הוא יופיע כאן.</div>`}
+      : emptyCard('chart', 'עוד אין היסטוריה', 'אחרי שתסיים ותשמור את האימון הראשון, הוא יופיע כאן.')}
   `;
 }
 
@@ -114,15 +117,16 @@ function renderPlanSessions(root, history, planId) {
   if (!plan) return notFound(root);
 
   root.innerHTML = `
-    <a class="back-link" href="#/history">→ היסטוריה</a>
-    <h1>${esc(plan.name)}</h1>
+    ${backLink('#/history', 'היסטוריה')}
+    ${screenHead(esc(plan.name), countLabel(plan.sessions.length, 'אימון אחד', 'אימונים'))}
     ${[...plan.sessions].reverse().map((s) => `
-      <a class="card history-card" href="#/history/${encodeURIComponent(planId)}/${s.id}">
-        <div>
-          <div class="plan-card-title">${longDate(s.date)}</div>
+      <a class="card row-card" href="#/history/${encodeURIComponent(planId)}/${s.id}">
+        ${iconChip('calendar', 'muted')}
+        <div class="grow">
+          <div class="card-title">${longDate(s.date)}</div>
           <div class="small">${sessionSummary(s)}</div>
         </div>
-        <span class="chevron">‹</span>
+        <span class="chevron">${icon('chevron')}</span>
       </a>`).join('')}
   `;
 }
@@ -134,16 +138,17 @@ function renderSession(root, history, planId, sessionId) {
   if (!session) return notFound(root);
 
   root.innerHTML = `
-    <a class="back-link" href="#/history/${encodeURIComponent(planId)}">→ ${esc(plan.name)}</a>
-    <h1>${longDate(session.date)}</h1>
+    ${backLink(`#/history/${encodeURIComponent(planId)}`, esc(plan.name))}
+    ${screenHead(longDate(session.date), esc(plan.name))}
     ${session.exercises.map((ex) => `
       <div class="card">
-        <div class="session-ex-head">
-          <div class="ex-title">${esc(ex.name)}</div>
+        <div class="row-card session-ex-head">
+          ${iconChip('dumbbell', ex.trend === 1 ? 'green' : ex.trend === -1 ? 'orange' : 'muted')}
+          <div class="grow card-title">${esc(ex.name)}</div>
           ${trendBadge(ex)}
         </div>
         ${ex.streak >= DECLINE_ALERT
-          ? `<div class="trend-alert small">⚠️ ירידה ${ex.streak} פעמים ברצף</div>` : ''}
+          ? `<div class="trend-alert small">${icon('alert')} ירידה ${ex.streak} פעמים ברצף</div>` : ''}
         <div class="set-chips">${setChips(ex.sets)}</div>
         ${ex.prev ? `
           <div class="prev-line small muted">פעם קודמת (${shortDate(ex.prev.date)}):</div>
@@ -159,8 +164,8 @@ function lastDate(plan) {
 }
 
 function notFound(root) {
-  root.innerHTML = `<div class="empty">לא נמצא</div>
-    <a class="btn btn-block" href="#/history">חזרה להיסטוריה</a>`;
+  root.innerHTML = `${backLink('#/history', 'היסטוריה')}
+    ${emptyCard('chart', 'לא נמצא', 'ייתכן שהאימון הזה כבר לא קיים.')}`;
 }
 
 const TRENDS = {
