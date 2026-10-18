@@ -2,25 +2,30 @@
 import {
   getPlans, getPlan, planName, getSchedule, setScheduleDay, getActiveWorkout, getSessions,
 } from './storage.js';
-import { esc, countLabel, DAY_NAMES, icon, iconChip } from './ui.js';
+import { esc, countLabel, DAY_NAMES, icon, iconChip, screenHead } from './ui.js';
 import { startWorkout } from './workout.js';
 
 export function renderToday(root) {
   const today = new Date().getDay(); // 0 = ראשון
+  const dateText = new Date().toLocaleDateString('he-IL', { day: 'numeric', month: 'long' });
+
+  // הכותרת מצוירת פעם אחת (היא עוברת לאזור הקבוע למעלה), והתוכן מתחתיה מתעדכן
+  root.innerHTML = `${screenHead('היום', `יום ${DAY_NAMES[today]}, ${dateText}`)}<div class="screen-body"></div>`;
+  const body = root.querySelector('.screen-body');
 
   // בחירת אימון ליום בלוח - שומרים ומציירים מחדש
-  root.addEventListener('change', (e) => {
+  body.addEventListener('change', (e) => {
     if (!e.target.matches('select[data-day]')) return;
     setScheduleDay(Number(e.target.dataset.day), e.target.value);
-    draw(root, today);
+    draw(body, today);
   });
 
-  root.addEventListener('click', (e) => {
+  body.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-start]');
     if (btn) startWorkout(btn.dataset.start);
   });
 
-  draw(root, today);
+  draw(body, today);
 }
 
 function draw(root, today) {
@@ -29,17 +34,12 @@ function draw(root, today) {
   const todayPlan = getPlan(schedule[today]);
   const active = getActiveWorkout();
   const todayIsActive = active && todayPlan && active.planId === todayPlan.id;
-  const dateText = new Date().toLocaleDateString('he-IL', { day: 'numeric', month: 'long' });
 
   root.innerHTML = `
-    <header class="screen-head">
-      <h1>היום</h1>
-      <div class="subtitle">יום ${DAY_NAMES[today]}, ${dateText}</div>
-    </header>
 
     ${active && !todayIsActive ? `
       <a class="card row-card" href="#/workout">
-        ${iconChip('bolt', 'cyan')}
+        ${iconChip('zap', 'cyan')}
         <div class="grow">
           <div class="label">אימון בתהליך</div>
           <div class="card-title">${esc(active.planName)}</div>
@@ -66,7 +66,7 @@ function draw(root, today) {
           ${iconChip('moon', 'cyan')}
           <div class="grow">
             <div class="card-title">יום מנוחה</div>
-            <div class="label">גם מנוחה היא חלק מהאימון 💤 רוצה להתאמן בכל זאת? בחר אימון בלשונית "תוכניות".</div>
+            <div class="label">גם מנוחה היא חלק מהאימון. רוצה להתאמן בכל זאת? בחר אימון בלשונית "תוכניות".</div>
           </div>
         </div>`}
     </div>
@@ -122,7 +122,7 @@ function weekCard(schedule) {
       ${iconChip('flame', 'orange')}
       <div class="grow">
         <div class="label">השבוע</div>
-        <div class="card-title card-title-lg"><span dir="ltr">${done} / ${planned}</span> אימונים</div>
+        <div class="card-title card-title-lg">${done} מתוך ${planned} אימונים</div>
       </div>
       ${ring(pct)}
     </div>`;

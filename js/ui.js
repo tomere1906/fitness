@@ -15,31 +15,11 @@ export function fmtNum(n) {
   return String(Math.round((Number(n) || 0) * 100) / 100);
 }
 
-// ===== אייקונים (קווים דקים, בצבע הטקסט שסביבם) =====
-const ICONS = {
-  dumbbell: '<path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/>',
-  flame: '<path d="M12 3c.8 3.2 5 5.4 5 10a5 5 0 0 1-10 0c0-2.1 1-3.6 2.2-4.6.1 1.6.8 2.7 1.9 3.1C11 8.6 11 6 12 3z"/>',
-  calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
-  moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
-  play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>',
-  bolt: '<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>',
-  pencil: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
-  plus: '<path d="M12 5v14M5 12h14"/>',
-  chevron: '<path d="M15 6l-6 6 6 6"/>', // מצביע שמאלה = "קדימה" בעברית
-  back: '<path d="M9 6l6 6-6 6"/>',
-  chart: '<path d="M4 19V5M4 19h16"/><path d="M8 15l4-4 3 3 5-6"/>',
-  alert: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.5v.01"/>',
-  download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
-  upload: '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',
-  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
-  x: '<path d="M6 6l12 12M18 6L6 18"/>',
-  check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
-  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>',
-  list: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>',
-};
+// ===== אייקונים (Lucide) =====
+import { ICONS } from './icons.js';
 
 export function icon(name) {
-  return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
+  return `<svg class="icon icon-${name}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 }
 
 // אייקון בתוך עיגול רך. color: green / cyan / orange / red / muted
@@ -47,9 +27,9 @@ export function iconChip(name, color = 'green') {
   return `<span class="icon-chip chip-${color}">${icon(name)}</span>`;
 }
 
-// קישור "חזרה" בראש מסך פנימי
+// קישור "חזרה" בראש מסך פנימי (חץ ימינה = אחורה בעברית)
 export function backLink(href, text) {
-  return `<a class="back-link" href="${href}">${icon('back')} ${text}</a>`;
+  return `<a class="back-link" href="${href}">${icon('chevron-right')} ${text}</a>`;
 }
 
 // כותרת מסך: כותרת גדולה + שורת משנה
@@ -98,10 +78,10 @@ export function stepper({ field, value, step = 1, min = 0, decimal = false, labe
     <div class="stepper" data-field="${field}" data-step="${step}" data-min="${min}">
       ${label ? `<span class="stepper-label">${label}</span>` : ''}
       <div class="stepper-row">
-        <button type="button" class="stepper-btn" data-dir="1" aria-label="הוסף">+</button>
+        <button type="button" class="stepper-btn" data-dir="1" aria-label="הוסף">${icon('plus')}</button>
         <input class="stepper-input" type="text" inputmode="${decimal ? 'decimal' : 'numeric'}"
                value="${fmtNum(value)}" aria-label="${label || field}">
-        <button type="button" class="stepper-btn" data-dir="-1" aria-label="הפחת">−</button>
+        <button type="button" class="stepper-btn" data-dir="-1" aria-label="הפחת">${icon('minus')}</button>
       </div>
     </div>`;
 }
@@ -147,11 +127,54 @@ export function bindSteppers(root, onChange) {
 }
 
 // הודעה קצרה בתחתית המסך שנעלמת לבד
-export function toast(message) {
+export function toast(message, iconName = 'circle-check') {
   document.querySelector('.toast')?.remove();
   const el = document.createElement('div');
   el.className = 'toast';
-  el.textContent = message;
+  el.innerHTML = `${icon(iconName)}<span>${esc(message)}</span>`;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 2200);
+}
+
+// ===== חלון דיאלוג בעיצוב האפליקציה =====
+// מחליף את confirm() / alert() של הדפדפן, שנראים כמו אתר ולא כמו אפליקציה.
+// מחזיר Promise: true אם לחצו על כפתור האישור, false אם על ביטול.
+// דוגמה: if (await confirmDialog({ title: 'למחוק?', danger: true })) { ... }
+export function confirmDialog({
+  title, message = '', confirmText = 'אישור', cancelText = 'ביטול', danger = false,
+  iconName = danger ? 'triangle-alert' : 'info',
+}) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay';
+    overlay.innerHTML = `
+      <div class="dialog" role="dialog" aria-modal="true">
+        ${iconChip(iconName, danger ? 'red' : 'green')}
+        <div class="dialog-title">${esc(title)}</div>
+        ${message ? `<div class="dialog-text">${esc(message)}</div>` : ''}
+        <div class="dialog-actions">
+          <button class="btn btn-block ${danger ? 'btn-danger-solid' : 'btn-primary'}" data-result="1">${esc(confirmText)}</button>
+          ${cancelText ? `<button class="btn btn-ghost btn-block" data-result="0">${esc(cancelText)}</button>` : ''}
+        </div>
+      </div>`;
+
+    const close = (result) => {
+      overlay.classList.add('closing');
+      setTimeout(() => overlay.remove(), 160);
+      resolve(result);
+    };
+    overlay.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-result]');
+      if (btn) close(btn.dataset.result === '1');
+      else if (e.target === overlay && cancelText) close(false); // לחיצה על הרקע = ביטול
+    });
+
+    document.activeElement?.blur(); // סוגר את המקלדת אם הייתה פתוחה
+    document.body.appendChild(overlay);
+  });
+}
+
+// הודעה עם כפתור אחד
+export function alertDialog(title, message = '') {
+  return confirmDialog({ title, message, confirmText: 'הבנתי', cancelText: '' });
 }

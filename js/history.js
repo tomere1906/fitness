@@ -97,17 +97,17 @@ function renderPlanList(root, history) {
     ${plans.length
       ? plans.map((p) => `
         <a class="card row-card" href="#/history/${encodeURIComponent(p.planId)}">
-          ${iconChip(p.warnings.length ? 'alert' : 'chart', p.warnings.length ? 'orange' : 'green')}
+          ${iconChip(p.warnings.length ? 'triangle-alert' : 'chart-line', p.warnings.length ? 'orange' : 'green')}
           <div class="grow">
             <div class="card-title">${esc(p.name)}</div>
             <div class="label">${countLabel(p.sessions.length, 'אימון אחד', 'אימונים')} · אחרון ${shortDate(lastDate(p))}</div>
             ${p.warnings.length
               ? `<div class="trend-down small">${countLabel(p.warnings.length, 'תרגיל אחד', 'תרגילים')} בירידה רציפה</div>`
-              : '<div class="trend-up small">עקבי ✓</div>'}
+              : `<div class="trend-up trend-inline small">${icon('circle-check')} עקבי</div>`}
           </div>
-          <span class="chevron">${icon('chevron')}</span>
+          <span class="chevron">${icon('chevron-left')}</span>
         </a>`).join('')
-      : emptyCard('chart', 'עוד אין היסטוריה', 'אחרי שתסיים ותשמור את האימון הראשון, הוא יופיע כאן.')}
+      : emptyCard('chart-line', 'עוד אין היסטוריה', 'אחרי שתסיים ותשמור את האימון הראשון, הוא יופיע כאן.')}
   `;
 }
 
@@ -126,7 +126,7 @@ function renderPlanSessions(root, history, planId) {
           <div class="card-title">${longDate(s.date)}</div>
           <div class="small">${sessionSummary(s)}</div>
         </div>
-        <span class="chevron">${icon('chevron')}</span>
+        <span class="chevron">${icon('chevron-left')}</span>
       </a>`).join('')}
   `;
 }
@@ -148,7 +148,7 @@ function renderSession(root, history, planId, sessionId) {
           ${trendBadge(ex)}
         </div>
         ${ex.streak >= DECLINE_ALERT
-          ? `<div class="trend-alert small">${icon('alert')} ירידה ${ex.streak} פעמים ברצף</div>` : ''}
+          ? `<div class="trend-alert small">${icon('triangle-alert')} ירידה ${ex.streak} פעמים ברצף</div>` : ''}
         <div class="set-chips">${setChips(ex.sets)}</div>
         ${ex.prev ? `
           <div class="prev-line small muted">פעם קודמת (${shortDate(ex.prev.date)}):</div>
@@ -165,22 +165,22 @@ function lastDate(plan) {
 
 function notFound(root) {
   root.innerHTML = `${backLink('#/history', 'היסטוריה')}
-    ${emptyCard('chart', 'לא נמצא', 'ייתכן שהאימון הזה כבר לא קיים.')}`;
+    ${emptyCard('chart-line', 'לא נמצא', 'ייתכן שהאימון הזה כבר לא קיים.')}`;
 }
 
 const TRENDS = {
-  1: { cls: 'trend-up', icon: '↑', one: 'עלה', many: 'עלו', label: 'עלייה' },
-  0: { cls: 'trend-same', icon: '=', one: 'יציב', many: 'יציבים', label: 'יציב' },
-  '-1': { cls: 'trend-down', icon: '↓', one: 'ירד', many: 'ירדו', label: 'ירידה' },
+  1: { cls: 'trend-up', icon: 'trending-up', one: 'עלה', many: 'עלו', label: 'עלייה' },
+  0: { cls: 'trend-same', icon: 'equal', one: 'יציב', many: 'יציבים', label: 'יציב' },
+  '-1': { cls: 'trend-down', icon: 'trending-down', one: 'ירד', many: 'ירדו', label: 'ירידה' },
 };
 
-// "↑ 1 עלה · = 2 יציבים · ↓ 1 ירד"
+// "1 עלה · 2 יציבים · 1 ירד", כל חלק עם אייקון המגמה שלו
 function sessionSummary(session) {
   const parts = [1, 0, -1].map((t) => {
     const n = session.exercises.filter((ex) => ex.trend === t).length;
     if (!n) return '';
     const tr = TRENDS[t];
-    return `<span class="${tr.cls}">${tr.icon} ${n} ${n === 1 ? tr.one : tr.many}</span>`;
+    return `<span class="trend-inline ${tr.cls}">${icon(tr.icon)} ${n} ${n === 1 ? tr.one : tr.many}</span>`;
   }).filter(Boolean);
   return parts.length ? parts.join(' <span class="muted">·</span> ') : '<span class="muted">פעם ראשונה</span>';
 }
@@ -188,7 +188,7 @@ function sessionSummary(session) {
 function trendBadge(ex) {
   if (ex.trend === null) return '<span class="trend-badge trend-same">חדש</span>';
   const tr = TRENDS[ex.trend];
-  return `<span class="trend-badge ${tr.cls}">${tr.icon} ${tr.label}</span>`;
+  return `<span class="trend-badge ${tr.cls}">${icon(tr.icon)} ${tr.label}</span>`;
 }
 
 function setChips(sets) {

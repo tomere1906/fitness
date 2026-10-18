@@ -4,12 +4,12 @@ import {
   addSession, getLastPerformance, newId,
 } from './storage.js';
 import {
-  esc, fmtNum, toast, stepper, bindSteppers, shortDate, icon, iconChip, screenHead, emptyCard,
+  esc, fmtNum, toast, stepper, bindSteppers, shortDate, icon, iconChip, screenHead, emptyCard, confirmDialog, alertDialog,
 } from './ui.js';
 import { currentDeclineStreak, DECLINE_ALERT } from './history.js';
 
 // ===== התחלת אימון מתוך תוכנית =====
-export function startWorkout(planId) {
+export async function startWorkout(planId) {
   const plan = getPlan(planId);
   if (!plan) return;
 
@@ -20,11 +20,18 @@ export function startWorkout(planId) {
       location.hash = '#/workout';
       return;
     }
-    if (!confirm(`האימון "${active.planName}" עוד פתוח ולא נשמר. לבטל אותו ולהתחיל אימון חדש?`)) return;
+    const ok = await confirmDialog({
+      title: 'יש אימון פתוח',
+      message: `האימון "${active.planName}" עוד לא נשמר. לבטל אותו ולהתחיל אימון חדש?`,
+      confirmText: 'התחל אימון חדש',
+      cancelText: 'השאר',
+      danger: true,
+    });
+    if (!ok) return;
   }
 
   if (!plan.exercises.length) {
-    toast('אין תרגילים באימון הזה');
+    toast('אין תרגילים באימון הזה', 'info');
     location.hash = `#/plans/${plan.id}`;
     return;
   }
@@ -66,7 +73,7 @@ export function renderWorkout(root) {
 
   root.innerHTML = `
     ${screenHead(esc(w.planName), 'אימון בתהליך · הכול נשמר תוך כדי')}
-    <div class="card progress-card">
+    <div class="card progress-card head-extra">
       <div class="progress-top">
         <span class="label">התקדמות</span>
         <span class="progress-count" id="progress"></span>
@@ -96,7 +103,7 @@ export function renderWorkout(root) {
     setActiveWorkout(w);
   });
 
-  root.addEventListener('click', (e) => {
+  root.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const action = btn.dataset.action;
@@ -137,7 +144,8 @@ export function renderWorkout(root) {
     if (action === 'remove-set') {
       const { ex, exEl } = where(btn);
       if (ex.sets.length <= 1) return;
-      if (ex.sets[ex.sets.length - 1].done && !confirm('הסט האחרון כבר סומן כבוצע. להסיר אותו?')) return;
+      if (ex.sets[ex.sets.length - 1].done
+        && !(await confirmDialog({ title: 'להסיר את הסט האחרון?', message: 'הוא כבר סומן כבוצע.', confirmText: 'הסר', danger: true }))) return;
       ex.sets.pop();
       setActiveWorkout(w);
       exEl.innerHTML = exerciseHtml(ex);
@@ -147,22 +155,38 @@ export function renderWorkout(root) {
     if (action === 'finish') finishWorkout(w);
 
     if (action === 'cancel') {
-      if (!confirm('לבטל את האימון? מה שהזנת לא יישמר.')) return;
+      const ok = await confirmDialog({
+        title: 'לבטל את האימון?',
+        message: 'מה שהזנת באימון הזה לא יישמר.',
+        confirmText: 'בטל אימון',
+        cancelText: 'המשך להתאמן',
+        danger: true,
+      });
+      if (!ok) return;
       setActiveWorkout(null);
       location.hash = '#/today';
     }
   });
 }
 
-function finishWorkout(w) {
+async function finishWorkout(w) {
   const all = w.exercises.flatMap((ex) => ex.sets);
   const done = all.filter((s) => s.done).length;
 
   if (done === 0) {
-    alert('עוד לא סימנת אף סט כבוצע. לחץ על מספר הסט כדי לסמן אותו.');
+    await alertDialog('עוד לא סימנת אף סט', 'לחץ על מספר הסט כדי לסמן אותו כבוצע.');
     return;
   }
-  if (done < all.length && !confirm(`סימנת ${done} מתוך ${all.length} סטים. לשמור רק את הסטים שסימנת?`)) return;
+  if (done < all.length) {
+    const ok = await confirmDialog({
+      title: 'לשמור את האימון?',
+      message: `סימנת ${done} מתוך ${all.length} סטים. יישמרו רק הסטים שסימנת.`,
+      confirmText: 'שמור',
+      cancelText: 'חזור לאימון',
+      iconName: 'circle-check',
+    });
+    if (!ok) return;
+  }
 
   addSession({
     id: newId(),
@@ -177,15 +201,15 @@ function finishWorkout(w) {
       .filter((ex) => ex.sets.length),
   });
   setActiveWorkout(null);
-  toast('האימון נשמר 💪');
+  toast('האימון נשמר');
   location.hash = '#/today';
 }
 
 function updateProgress(root, w) {
   const all = w.exercises.flatMap((ex) => ex.sets);
   const done = all.filter((s) => s.done).length;
-  root.querySelector('#progress').innerHTML = `<span dir="ltr">${done} / ${all.length}</span> סטים`;
-  root.querySelector('#progress-bar').style.width = `${(done / all.length) * 100}%`;
+  document.getElementById('progress').textContent = `${done} מתוך ${all.length} סטים`;
+  document.getElementById('progress-bar').style.width = `${(done / all.length) * 100}%`;
 }
 
 // ===== HTML של תרגיל אחד =====
@@ -200,7 +224,7 @@ function exerciseHtml(ex) {
       </div>
     </div>
     ${ex.declineStreak >= DECLINE_ALERT ? `
-      <div class="trend-alert small">${icon('alert')} ירידה ב-${ex.declineStreak} האימונים האחרונים ברצף. היום המטרה: לא לרדת.</div>` : ''}
+      <div class="trend-alert small">${icon('triangle-alert')} ירידה ב-${ex.declineStreak} האימונים האחרונים ברצף. היום המטרה: לא לרדת.</div>` : ''}
     ${ex.previous ? `
       <div class="ex-prev small">פעם קודמת (${shortDate(ex.previous.date)}): ${formatSets(ex.previous.sets)}</div>` : ''}
 
@@ -216,11 +240,11 @@ function exerciseHtml(ex) {
 
     ${ex.sets.every((s) => s.done)
       ? `<button class="btn btn-ghost btn-block all-done-btn" data-action="all-done">בטל סימון של כל הסטים</button>`
-      : `<button class="btn btn-soft btn-block all-done-btn" data-action="all-done">${icon('check')} סמן את כל הסטים כבוצעו</button>`}
+      : `<button class="btn btn-soft btn-block all-done-btn" data-action="all-done">${icon('check-check')} סמן את כל הסטים כבוצעו</button>`}
 
     <div class="ex-actions">
-      <button class="btn btn-ghost" data-action="remove-set">− הסר סט</button>
-      <button class="btn btn-ghost" data-action="add-set">+ הוסף סט</button>
+      <button class="btn btn-ghost" data-action="remove-set">${icon('minus')} הסר סט</button>
+      <button class="btn btn-ghost" data-action="add-set">${icon('plus')} הוסף סט</button>
     </div>`;
 }
 

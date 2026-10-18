@@ -1,6 +1,8 @@
 // שמירה וטעינה של כל הנתונים בדפדפן (localStorage).
 // זה המקום היחיד באפליקציה שנוגע ישירות באחסון.
 
+import { alertDialog } from './ui.js';
+
 const KEY = 'fitness-app:data';
 
 function emptyData() {
@@ -31,7 +33,7 @@ export function save() {
     localStorage.setItem(KEY, JSON.stringify(data));
   } catch (err) {
     console.error(err);
-    alert('השמירה נכשלה. ייתכן שהאחסון בדפדפן מלא.');
+    alertDialog('השמירה נכשלה', 'ייתכן שהאחסון בדפדפן מלא.');
   }
 }
 

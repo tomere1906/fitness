@@ -1,7 +1,7 @@
 // מסך תוכניות האימון: רשימת האימונים, ועריכה של אימון אחד
 import { getPlans, getPlan, createPlan, deletePlan, planName, save, newId } from './storage.js';
 import {
-  esc, countLabel, stepper, bindSteppers, icon, iconChip, backLink, screenHead, emptyCard,
+  esc, countLabel, stepper, bindSteppers, icon, iconChip, backLink, screenHead, emptyCard, confirmDialog,
 } from './ui.js';
 import { startWorkout } from './workout.js';
 
@@ -60,7 +60,7 @@ export function renderPlanEditor(root, id) {
     <button class="btn btn-dashed btn-block" data-action="add-ex">${icon('plus')} הוסף תרגיל</button>
     <div class="footer-actions">
       <a class="btn btn-primary btn-lg btn-block" href="#/plans">${icon('check')} סיום</a>
-      <button class="btn btn-danger btn-block" data-action="delete-plan">${icon('trash')} מחק את האימון</button>
+      <button class="btn btn-danger btn-block" data-action="delete-plan">${icon('trash-2')} מחק את האימון</button>
     </div>
   `;
 
@@ -79,8 +79,8 @@ export function renderPlanEditor(root, id) {
           ${stepper({ field: 'reps', value: ex.reps, min: 0, label: 'חזרות' })}
           ${stepper({ field: 'weight', value: ex.weight, step: 2.5, min: 0, decimal: true, label: 'משקל (ק״ג)' })}
           <div class="ex-move">
-            <button class="btn btn-ghost" data-action="move" data-dir="-1" ${i === 0 ? 'disabled' : ''}>↑ הזז למעלה</button>
-            <button class="btn btn-ghost" data-action="move" data-dir="1" ${i === plan.exercises.length - 1 ? 'disabled' : ''}>↓ הזז למטה</button>
+            <button class="btn btn-ghost" data-action="move" data-dir="-1" ${i === 0 ? 'disabled' : ''}>${icon('arrow-up')} הזז למעלה</button>
+            <button class="btn btn-ghost" data-action="move" data-dir="1" ${i === plan.exercises.length - 1 ? 'disabled' : ''}>${icon('arrow-down')} הזז למטה</button>
           </div>
         </div>`).join('')
       : emptyCard('list', 'עוד אין תרגילים', 'הוסף את התרגיל הראשון עם הכפתור למטה.');
@@ -125,11 +125,11 @@ export function renderPlanEditor(root, id) {
   });
 
   // מחיקת תרגיל
-  list.addEventListener('click', (e) => {
+  list.addEventListener('click', async (e) => {
     if (!e.target.closest('[data-action="del-ex"]')) return;
     const i = Number(e.target.closest('.ex-edit').dataset.index);
     const name = plan.exercises[i].name.trim();
-    if (name && !confirm(`למחוק את התרגיל "${name}"?`)) return;
+    if (name && !(await confirmDialog({ title: `למחוק את "${name}"?`, confirmText: 'מחק', danger: true }))) return;
     plan.exercises.splice(i, 1);
     save();
     renderExercises();
@@ -145,8 +145,14 @@ export function renderPlanEditor(root, id) {
   });
 
   // מחיקת האימון כולו
-  root.querySelector('[data-action="delete-plan"]').addEventListener('click', () => {
-    if (!confirm(`למחוק את "${planName(plan)}"? אי אפשר לבטל את זה.`)) return;
+  root.querySelector('[data-action="delete-plan"]').addEventListener('click', async () => {
+    const ok = await confirmDialog({
+      title: `למחוק את "${planName(plan)}"?`,
+      message: 'אי אפשר לבטל את זה. ההיסטוריה של האימונים שכבר עשית תישאר.',
+      confirmText: 'מחק אימון',
+      danger: true,
+    });
+    if (!ok) return;
     deletePlan(plan.id);
     location.hash = '#/plans';
   });

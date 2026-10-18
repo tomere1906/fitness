@@ -1,6 +1,8 @@
 // מסך הגדרות: גיבוי (ייצוא לקובץ) ושחזור (ייבוא מקובץ)
 import { exportData, importData, validateBackup, getLastBackup, setLastBackup } from './storage.js';
-import { countLabel, longDate, toast, icon, iconChip, screenHead } from './ui.js';
+import {
+  countLabel, longDate, toast, icon, iconChip, screenHead, confirmDialog, alertDialog,
+} from './ui.js';
 
 // אחרי כמה ימים בלי גיבוי מציגים תזכורת
 const REMIND_AFTER_DAYS = 7;
@@ -29,7 +31,7 @@ export function renderSettings(root) {
       </div>
 
       <div class="backup-status ${needsBackup ? 'is-stale' : ''}">
-        ${needsBackup ? icon('alert') : icon('check')}
+        ${needsBackup ? icon('triangle-alert') : icon('check')}
         <span>גיבוי אחרון: ${last ? `${longDate(last)} (${daysLabel(days)})` : 'עוד לא גיבית'}</span>
       </div>
 
@@ -57,7 +59,7 @@ export function renderSettings(root) {
     const saved = await exportBackup(d);
     if (!saved) return;
     setLastBackup(new Date().toISOString());
-    toast('הגיבוי נוצר ✓');
+    toast('הגיבוי נוצר');
     // מציירים את המסך מחדש כדי לעדכן את "גיבוי אחרון"
     window.dispatchEvent(new HashChangeEvent('hashchange'));
   });
@@ -76,15 +78,21 @@ export function renderSettings(root) {
       incoming = parsed.data ?? parsed; // הקובץ שלנו: { app, exportedAt, data }
       validateBackup(incoming);
     } catch (err) {
-      alert(`הייבוא נכשל: ${err instanceof SyntaxError ? 'הקובץ פגום או שהוא לא קובץ גיבוי' : err.message}`);
+      await alertDialog('הייבוא נכשל', err instanceof SyntaxError ? 'הקובץ פגום או שהוא לא קובץ גיבוי.' : err.message);
       return;
     }
 
     const summary = `${countLabel(incoming.plans.length, 'תוכנית אחת', 'תוכניות')}, ${countLabel(incoming.sessions.length, 'אימון אחד', 'אימונים')}`;
-    if (!confirm(`לייבא את הגיבוי (${summary})?\nכל הנתונים שיש עכשיו במכשיר הזה יוחלפו.`)) return;
+    const ok = await confirmDialog({
+      title: 'לייבא את הגיבוי?',
+      message: `בקובץ: ${summary}.\nכל הנתונים שיש עכשיו במכשיר הזה יוחלפו.`,
+      confirmText: 'ייבא',
+      danger: true,
+    });
+    if (!ok) return;
 
     importData(incoming);
-    toast('הנתונים שוחזרו ✓');
+    toast('הנתונים שוחזרו');
     location.hash = '#/today';
   });
 }
