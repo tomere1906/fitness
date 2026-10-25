@@ -3,6 +3,7 @@ import { exportData, importData, validateBackup, getLastBackup, setLastBackup } 
 import {
   countLabel, longDate, toast, icon, iconChip, screenHead, confirmDialog, alertDialog,
 } from './ui.js';
+import { APP_VERSION } from './version.js';
 
 // אחרי כמה ימים בלי גיבוי מציגים תזכורת
 const REMIND_AFTER_DAYS = 7;
@@ -51,6 +52,8 @@ export function renderSettings(root) {
         כך גם מעבירים נתונים ממכשיר למכשיר.
       </div>
     </div>
+
+    <div class="app-version">גרסה ${APP_VERSION}</div>
   `;
 
   const fileInput = root.querySelector('#import-file');

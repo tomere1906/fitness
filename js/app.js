@@ -96,6 +96,23 @@ if ('serviceWorker' in navigator) {
   if (isDev) {
     navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister()));
   } else {
-    navigator.serviceWorker.register('sw.js');
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      // באייפון, יציאה למסך הבית לא סוגרת את האפליקציה. לכן בכל פעם שחוזרים אליה -
+      // בודקים אם יש גרסה חדשה באתר
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update();
+      });
+    });
+
+    // גרסה חדשה נכנסה לפעולה → טוענים את הדף מחדש כדי להציג אותה.
+    // (לא בפעם הראשונה שהאפליקציה נפתחת אי פעם - אז אין גרסה "קודמת")
+    // הנתונים לא נפגעים: הכול כבר שמור, כולל אימון שבאמצע.
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloading) return;
+      reloading = true;
+      location.reload();
+    });
   }
 }

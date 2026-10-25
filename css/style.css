@@ -737,3 +737,4 @@ input:-webkit-autofill {
 .compare-label { font-size: 13px; color: var(--text-dim); }
 .compare .trend-badge { background: transparent; padding: 0; }
 .summary-line { margin-top: 2px; }
+.app-version { text-align: center; color: var(--text-dim); font-size: 13px; margin: 8px 0 0; opacity: 0.7; }
