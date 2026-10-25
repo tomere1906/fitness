@@ -41,8 +41,36 @@ export async function startWorkout(planId) {
     planName: planName(plan),
     startedAt: new Date().toISOString(),
     exercises: plan.exercises.map((ex) => newWorkoutExercise(ex, plan.id)),
+    prefillRule: PREFILL_RULE,
   });
   location.hash = '#/workout';
+}
+
+// גרסת הכלל שלפיו ממלאים ערכים מראש. 2 = רק מאותו סוג אימון (מגרסה 1.6)
+const PREFILL_RULE = 2;
+
+// "פעם קודמת" ומספר הירידות מחושבים מחדש בכל פתיחה של מסך האימון,
+// ולא רק ברגע שהאימון התחיל - כך הם תמיד לפי הנתונים והכללים העדכניים
+function refreshFromHistory(w) {
+  for (const ex of w.exercises) {
+    ex.previous = getLastPerformance(ex.name, w.planId);
+    ex.declineStreak = currentDeclineStreak(w.planId, ex.name);
+  }
+
+  // אימון שהתחיל בגרסה ישנה, שבה הערכים יכלו להגיע מאימון אחר:
+  // בתרגילים שעוד לא סימנת בהם אף סט - ממלאים מחדש לפי הכלל הנוכחי
+  if ((w.prefillRule || 1) < PREFILL_RULE) {
+    const plan = getPlan(w.planId);
+    w.exercises = w.exercises.map((ex) => {
+      if (ex.sets.some((s) => s.done)) return ex;
+      const pe = plan?.exercises.find((p) => p.id === ex.exerciseId)
+        || plan?.exercises.find((p) => exerciseKey(p.name) === exerciseKey(ex.name));
+      return pe ? newWorkoutExercise(pe, w.planId) : ex;
+    });
+    w.prefillRule = PREFILL_RULE;
+  }
+
+  setActiveWorkout(w);
 }
 
 // תרגיל באימון הפעיל, מתוך תרגיל בתוכנית
@@ -127,6 +155,7 @@ export function renderWorkout(root) {
       `<a class="btn btn-primary" href="#/today">למסך היום</a>`);
     return;
   }
+  refreshFromHistory(w);
 
   root.innerHTML = `
     ${screenHead(esc(w.planName), 'אימון בתהליך · הכול נשמר תוך כדי')}
