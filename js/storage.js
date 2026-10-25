@@ -11,6 +11,8 @@ function emptyData() {
     plans: [],          // תוכניות אימון
     // לוח שבועי: לכל יום (0 = ראשון ... 6 = שבת) מזהה האימון, או null = מנוחה
     schedule: [null, null, null, null, null, null, null],
+    // שינויים לתאריך מסוים (גוברים על הלוח הקבוע): { "2026-10-27": מזהה אימון, או "" = מנוחה }
+    scheduleOverrides: {},
     sessions: [],       // אימונים שבוצעו ונשמרו (מהישן לחדש)
     activeWorkout: null, // אימון שנמצא כרגע בתהליך
   };
@@ -62,8 +64,11 @@ export function createPlan() {
 
 export function deletePlan(id) {
   data.plans = data.plans.filter((p) => p.id !== id);
-  // אימון שנמחק יוצא גם מהלוח השבועי
+  // אימון שנמחק יוצא גם מהלוח השבועי ומהשינויים לתאריכים
   data.schedule = data.schedule.map((planId) => (planId === id ? null : planId));
+  for (const date of Object.keys(data.scheduleOverrides)) {
+    if (data.scheduleOverrides[date] === id) data.scheduleOverrides[date] = '';
+  }
   save();
 }
 
@@ -82,9 +87,42 @@ export function setScheduleDay(day, planId) {
   save();
 }
 
+// "2026-10-27" לפי השעון המקומי
+export function dateKey(date) {
+  const d = new Date(date);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+// איזה אימון מתוכנן לתאריך מסוים: שינוי לתאריך הזה אם יש, אחרת הלוח הקבוע.
+// מחזיר { planId, override } - override = true אם התאריך שונה מהלוח הקבוע
+export function getPlanForDate(date) {
+  const key = dateKey(date);
+  if (key in data.scheduleOverrides) {
+    return { planId: data.scheduleOverrides[key] || null, override: true };
+  }
+  return { planId: data.schedule[new Date(date).getDay()], override: false };
+}
+
+// שינוי לתאריך מסוים. אם בחרו בדיוק מה שיש בלוח הקבוע - השינוי נמחק
+export function setPlanForDate(date, planId) {
+  const key = dateKey(date);
+  if ((planId || null) === data.schedule[new Date(date).getDay()]) {
+    delete data.scheduleOverrides[key];
+  } else {
+    data.scheduleOverrides[key] = planId || '';
+  }
+  // מנקים שינויים של תאריכים שעברו לפני יותר מחודש
+  const monthAgo = dateKey(Date.now() - 31 * 86400000);
+  for (const k of Object.keys(data.scheduleOverrides)) {
+    if (k < monthAgo) delete data.scheduleOverrides[k];
+  }
+  save();
+}
+
 // ===== אימון פעיל =====
 // { planId, planName, startedAt,
-//   exercises: [{ name, planned: { sets, reps, weight }, previous, sets: [{ weight, reps, done }] }] }
+//   exercises: [{ exerciseId, name, planned: { sets, reps, weight }, previous, sets: [{ weight, reps, done }] }] }
 
 export function getActiveWorkout() {
   return data.activeWorkout;
@@ -96,7 +134,8 @@ export function setActiveWorkout(workout) {
 }
 
 // ===== אימונים שבוצעו =====
-// { id, planId, planName, date, exercises: [{ name, sets: [{ weight, reps }] }] }
+// { id, planId, planName, date, exercises: [{ name, planned: { sets, reps, weight }, sets: [{ weight, reps }] }] }
+// (planned קיים רק באימונים שנשמרו מאז שהתחלנו לשמור את התכנון)
 
 export function getSessions() {
   return data.sessions;

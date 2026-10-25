@@ -28,9 +28,22 @@ function compare(sets, prevSets) {
   return 0;
 }
 
+// השוואה לתכנון: 1 = מעל התכנון, 0 = עמד בתכנון, -1 = מתחת לתכנון, null = אין נתוני תכנון.
+// מתחת: עשית פחות סטים, או סט עם פחות משקל / פחות חזרות ממה שתוכנן.
+// מעל: עמדת בכל התכנון, ובנוסף עשית יותר (סט נוסף, משקל או חזרות)
+function compareToPlan(sets, planned) {
+  if (!planned) return null;
+  const below = sets.length < planned.sets
+    || sets.some((s) => s.weight < planned.weight || s.reps < planned.reps);
+  if (below) return -1;
+  const above = sets.length > planned.sets
+    || sets.some((s) => s.weight > planned.weight || s.reps > planned.reps);
+  return above ? 1 : 0;
+}
+
 // כל האימונים שבוצעו, מקובצים לפי סוג אימון.
 // לכל תרגיל בכל אימון מחושבים: trend (מגמה מול הפעם הקודמת באותו סוג אימון),
-// streak (כמה ירידות ברצף), prev (מה היה בפעם הקודמת)
+// streak (כמה ירידות ברצף), prev (מה היה בפעם הקודמת), vsPlan (מול התכנון)
 export function getPlanHistory() {
   const plans = new Map();
 
@@ -50,7 +63,11 @@ export function getPlanHistory() {
         const trend = prev ? compare(ex.sets, prev.sets) : null;
         const streak = trend === -1 ? prev.streak + 1 : 0;
         plan.last.set(key, { sets: ex.sets, date: session.date, streak });
-        return { name: ex.name, sets: ex.sets, trend, streak, prev };
+        return {
+          name: ex.name, sets: ex.sets, trend, streak, prev,
+          planned: ex.planned || null,
+          vsPlan: compareToPlan(ex.sets, ex.planned),
+        };
       }),
     });
   }
@@ -124,14 +141,15 @@ function renderPlanSessions(root, history, planId) {
         ${iconChip('calendar', 'muted')}
         <div class="grow">
           <div class="card-title">${longDate(s.date)}</div>
-          <div class="small">${sessionSummary(s)}</div>
+          <div class="small summary-line"><span class="muted">מול התכנון:</span> ${planSummary(s)}</div>
+          <div class="small summary-line"><span class="muted">מול פעם קודמת:</span> ${sessionSummary(s)}</div>
         </div>
         <span class="chevron">${icon('chevron-left')}</span>
       </a>`).join('')}
   `;
 }
 
-// --- רמה 3: אימון אחד - התרגילים, הסטים, והשוואה לפעם הקודמת ---
+// --- רמה 3: אימון אחד - התרגילים, הסטים, והשוואה לתכנון ולפעם הקודמת ---
 function renderSession(root, history, planId, sessionId) {
   const plan = history.find((p) => p.planId === planId);
   const session = plan?.sessions.find((s) => s.id === sessionId);
@@ -143,13 +161,30 @@ function renderSession(root, history, planId, sessionId) {
     ${session.exercises.map((ex) => `
       <div class="card">
         <div class="row-card session-ex-head">
-          ${iconChip('dumbbell', ex.trend === 1 ? 'green' : ex.trend === -1 ? 'orange' : 'muted')}
+          ${iconChip('dumbbell', exerciseColor(ex))}
           <div class="grow card-title">${esc(ex.name)}</div>
-          ${trendBadge(ex)}
         </div>
+
+        <!-- שתי השוואות: מול התכנון ומול הפעם הקודמת -->
+        <div class="compare-grid">
+          <div class="compare">
+            <div class="compare-label">מול התכנון</div>
+            ${planBadge(ex)}
+          </div>
+          <div class="compare">
+            <div class="compare-label">מול פעם קודמת</div>
+            ${trendBadge(ex)}
+          </div>
+        </div>
+
         ${ex.streak >= DECLINE_ALERT
           ? `<div class="trend-alert small">${icon('triangle-alert')} ירידה ${ex.streak} פעמים ברצף</div>` : ''}
+
+        <div class="prev-line small muted">ביצעת:</div>
         <div class="set-chips">${setChips(ex.sets)}</div>
+        ${ex.planned ? `
+          <div class="prev-line small muted">תוכנן:</div>
+          <div class="set-chips set-chips-dim">${plannedChip(ex.planned)}</div>` : ''}
         ${ex.prev ? `
           <div class="prev-line small muted">פעם קודמת (${shortDate(ex.prev.date)}):</div>
           <div class="set-chips set-chips-dim">${setChips(ex.prev.sets)}</div>` : ''}
@@ -186,9 +221,45 @@ function sessionSummary(session) {
 }
 
 function trendBadge(ex) {
-  if (ex.trend === null) return '<span class="trend-badge trend-same">חדש</span>';
+  if (ex.trend === null) return '<span class="trend-badge trend-same">פעם ראשונה</span>';
   const tr = TRENDS[ex.trend];
   return `<span class="trend-badge ${tr.cls}">${icon(tr.icon)} ${tr.label}</span>`;
+}
+
+// ===== השוואה לתכנון =====
+const VS_PLAN = {
+  1: { cls: 'trend-up', icon: 'trending-up', label: 'מעל התכנון' },
+  0: { cls: 'trend-up', icon: 'circle-check', label: 'עמד בתכנון' },
+  '-1': { cls: 'trend-down', icon: 'trending-down', label: 'מתחת לתכנון' },
+};
+
+function planBadge(ex) {
+  // אימונים שנשמרו לפני שהתחלנו לשמור את התכנון
+  if (ex.vsPlan === null) return '<span class="trend-badge trend-same">אין נתוני תכנון</span>';
+  const v = VS_PLAN[ex.vsPlan];
+  return `<span class="trend-badge ${v.cls}">${icon(v.icon)} ${v.label}</span>`;
+}
+
+// "עמד ב-2 מתוך 3 תרגילים"
+function planSummary(session) {
+  const withPlan = session.exercises.filter((ex) => ex.vsPlan !== null);
+  if (!withPlan.length) return '<span class="muted">אין נתוני תכנון</span>';
+  const met = withPlan.filter((ex) => ex.vsPlan >= 0).length;
+  const cls = met === withPlan.length ? 'trend-up' : 'trend-down';
+  const ic = met === withPlan.length ? 'circle-check' : 'trending-down';
+  return `<span class="trend-inline ${cls}">${icon(ic)} עמד ב-${met} מתוך ${withPlan.length}</span>`;
+}
+
+// צבע האייקון של תרגיל: כתום אם יש ירידה (מול התכנון או מול הפעם הקודמת), ירוק אם הכול טוב
+function exerciseColor(ex) {
+  if (ex.vsPlan === -1 || ex.trend === -1) return 'orange';
+  if (ex.vsPlan !== null || ex.trend === 1) return 'green';
+  return 'muted';
+}
+
+// "3 × 10 חזרות · 40 ק״ג"
+function plannedChip(p) {
+  return `<span class="set-chip"><b>${p.sets}</b> סטים × <b>${p.reps}</b> חזרות${p.weight ? ` · <b>${fmtNum(p.weight)}</b> ק״ג` : ''}</span>`;
 }
 
 function setChips(sets) {

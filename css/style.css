@@ -697,3 +697,43 @@ input:-webkit-autofill {
   *::before,
   *::after { animation: none !important; transition: none !important; }
 }
+
+/* ===== בורר מקטעים (השבוע / שבוע הבא / קבוע) ===== */
+.segmented {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 10px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.segmented button {
+  flex: 1;
+  min-height: 40px;
+  border-radius: 10px;
+  color: var(--text-dim);
+  font-weight: 700;
+  font-size: 15px;
+  transition: background-color 0.15s, color 0.15s;
+}
+.segmented button.active { background: var(--surface-2); color: var(--accent); }
+.week-hint { font-size: 13px; margin: 0 4px 12px; }
+.day-date { color: var(--text-dim); font-weight: 600; font-size: 15px; }
+.day-row.is-past { opacity: 0.5; }
+.tag-cyan { color: var(--cyan); background: var(--cyan-soft); }
+
+/* ===== השוואה לתכנון ולפעם הקודמת ===== */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+.compare {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.compare-label { font-size: 13px; color: var(--text-dim); }
+.compare .trend-badge { background: transparent; padding: 0; }
+.summary-line { margin-top: 2px; }

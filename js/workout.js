@@ -1,7 +1,7 @@
 // מסך אימון פעיל: מזינים חזרות ומשקל לכל סט, ובסוף שומרים
 import {
   getPlan, planName, getActiveWorkout, setActiveWorkout,
-  addSession, getLastPerformance, newId,
+  addSession, getLastPerformance, newId, exerciseKey,
 } from './storage.js';
 import {
   esc, fmtNum, toast, stepper, bindSteppers, shortDate, icon, iconChip, screenHead, emptyCard, confirmDialog, alertDialog,
@@ -40,26 +40,83 @@ export async function startWorkout(planId) {
     planId: plan.id,
     planName: planName(plan),
     startedAt: new Date().toISOString(),
-    exercises: plan.exercises.map((ex) => {
-      const last = getLastPerformance(ex.name, plan.id);
-      return {
-        name: ex.name.trim() || 'תרגיל ללא שם',
-        planned: { sets: ex.sets, reps: ex.reps, weight: ex.weight },
-        previous: last,
-        declineStreak: currentDeclineStreak(plan.id, ex.name),
-        // כל סט ממולא מראש: מה שעשית בפעם הקודמת, ואם אין - מה שמתוכנן
-        sets: Array.from({ length: ex.sets }, (_, j) => {
-          const prev = last?.sets[j];
-          return {
-            weight: prev ? prev.weight : ex.weight,
-            reps: prev ? prev.reps : ex.reps,
-            done: false,
-          };
-        }),
-      };
-    }),
+    exercises: plan.exercises.map((ex) => newWorkoutExercise(ex, plan.id)),
   });
   location.hash = '#/workout';
+}
+
+// תרגיל באימון הפעיל, מתוך תרגיל בתוכנית
+function newWorkoutExercise(ex, planId) {
+  const last = getLastPerformance(ex.name, planId);
+  return {
+    exerciseId: ex.id, // כדי לדעת לאיזה תרגיל בתוכנית הוא שייך
+    name: ex.name.trim() || 'תרגיל ללא שם',
+    planned: { sets: ex.sets, reps: ex.reps, weight: ex.weight },
+    previous: last,
+    declineStreak: currentDeclineStreak(planId, ex.name),
+    // כל סט ממולא מראש: מה שעשית בפעם הקודמת, ואם אין - מה שמתוכנן
+    sets: Array.from({ length: ex.sets }, (_, j) => {
+      const prev = last?.sets[j];
+      return {
+        weight: prev ? prev.weight : ex.weight,
+        reps: prev ? prev.reps : ex.reps,
+        done: false,
+      };
+    }),
+  };
+}
+
+// ===== עדכון אימון פעיל כשהתוכנית שלו משתנה =====
+// נקרא מעורך התוכנית בכל שינוי. מעדכן רק סטים שעוד לא סומנו כבוצעו,
+// ורק את הערך שהשתנה (אם שינית משקל - החזרות שמילאנו מהפעם הקודמת נשארות)
+export function syncActiveWorkout(plan) {
+  const w = getActiveWorkout();
+  if (!w || w.planId !== plan.id) return;
+
+  const findCurrent = (pe) => w.exercises.find((ex) => ex.exerciseId === pe.id)
+    // אימון שהתחיל לפני שהוספנו exerciseId - מזהים לפי השם
+    || w.exercises.find((ex) => !ex.exerciseId && exerciseKey(ex.name) === exerciseKey(pe.name));
+
+  // התרגילים באימון שעדיין קיימים בתוכנית
+  const matched = new Set(plan.exercises.map(findCurrent).filter(Boolean));
+
+  const synced = plan.exercises.map((pe) => {
+    const ex = findCurrent(pe);
+    if (!ex) return newWorkoutExercise(pe, plan.id); // תרגיל שנוסף לתוכנית עכשיו
+
+    const old = ex.planned;
+    let sets = ex.sets.map((s) => (s.done ? s : {
+      ...s,
+      weight: pe.weight !== old.weight ? pe.weight : s.weight,
+      reps: pe.reps !== old.reps ? pe.reps : s.reps,
+    }));
+
+    // מספר הסטים השתנה בתוכנית: מתאימים את האימון למספר החדש,
+    // אבל אף פעם לא פחות מהסטים שכבר בוצעו
+    if (pe.sets !== old.sets) {
+      const target = Math.max(pe.sets, sets.filter((s) => s.done).length, 1);
+      while (sets.length < target) sets.push({ weight: pe.weight, reps: pe.reps, done: false });
+      // מורידים מהסוף, רק סטים שעוד לא בוצעו
+      for (let k = sets.length - 1; k >= 0 && sets.length > target; k--) {
+        if (!sets[k].done) sets.splice(k, 1);
+      }
+    }
+
+    return {
+      ...ex,
+      exerciseId: pe.id,
+      name: pe.name.trim() || ex.name,
+      planned: { sets: pe.sets, reps: pe.reps, weight: pe.weight },
+      sets,
+    };
+  });
+
+  // תרגיל שנמחק מהתוכנית: נשאר באימון רק אם כבר ביצעת בו סטים
+  const kept = w.exercises.filter((ex) => !matched.has(ex) && ex.sets.some((s) => s.done));
+
+  w.planName = planName(plan);
+  w.exercises = [...synced, ...kept];
+  setActiveWorkout(w);
 }
 
 // ===== המסך (#/workout) =====
@@ -196,6 +253,7 @@ async function finishWorkout(w) {
     exercises: w.exercises
       .map((ex) => ({
         name: ex.name,
+        planned: ex.planned, // מה שתוכנן - כדי להשוות אליו בהיסטוריה
         sets: ex.sets.filter((s) => s.done).map((s) => ({ weight: s.weight, reps: s.reps })),
       }))
       .filter((ex) => ex.sets.length),

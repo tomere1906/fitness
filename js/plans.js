@@ -3,7 +3,7 @@ import { getPlans, getPlan, createPlan, deletePlan, planName, save, newId } from
 import {
   esc, countLabel, stepper, bindSteppers, icon, iconChip, backLink, screenHead, emptyCard, confirmDialog,
 } from './ui.js';
-import { startWorkout } from './workout.js';
+import { startWorkout, syncActiveWorkout } from './workout.js';
 
 // ===== רשימת כל האימונים (#/plans) =====
 export function renderPlans(root) {
@@ -66,6 +66,12 @@ export function renderPlanEditor(root, id) {
 
   const list = root.querySelector('#exercises');
 
+  // שמירה + עדכון האימון הפעיל, אם יש אימון פתוח של התוכנית הזו
+  function savePlan() {
+    save();
+    syncActiveWorkout(plan);
+  }
+
   function renderExercises() {
     list.innerHTML = plan.exercises.length
       ? plan.exercises.map((ex, i) => `
@@ -90,7 +96,7 @@ export function renderPlanEditor(root, id) {
   // שם האימון נשמר תוך כדי הקלדה
   root.querySelector('#plan-name').addEventListener('input', (e) => {
     plan.name = e.target.value;
-    save();
+    savePlan();
   });
 
   // שם התרגיל נשמר תוך כדי הקלדה
@@ -98,14 +104,14 @@ export function renderPlanEditor(root, id) {
     if (!e.target.classList.contains('ex-name')) return;
     const i = Number(e.target.closest('.ex-edit').dataset.index);
     plan.exercises[i].name = e.target.value;
-    save();
+    savePlan();
   });
 
   // סטים / חזרות / משקל
   bindSteppers(list, (stepperEl, value) => {
     const i = Number(stepperEl.closest('.ex-edit').dataset.index);
     plan.exercises[i][stepperEl.dataset.field] = value;
-    save();
+    savePlan();
   });
 
   // הזזת תרגיל למעלה / למטה בסדר האימון
@@ -116,7 +122,7 @@ export function renderPlanEditor(root, id) {
     const to = i + Number(btn.dataset.dir);
     if (to < 0 || to >= plan.exercises.length) return;
     [plan.exercises[i], plan.exercises[to]] = [plan.exercises[to], plan.exercises[i]];
-    save();
+    savePlan();
     renderExercises();
     // מראים לאן התרגיל עבר
     const moved = list.querySelector(`.ex-edit[data-index="${to}"]`);
@@ -131,14 +137,14 @@ export function renderPlanEditor(root, id) {
     const name = plan.exercises[i].name.trim();
     if (name && !(await confirmDialog({ title: `למחוק את "${name}"?`, confirmText: 'מחק', danger: true }))) return;
     plan.exercises.splice(i, 1);
-    save();
+    savePlan();
     renderExercises();
   });
 
   // הוספת תרגיל - עם ערכים התחלתיים, והמקלדת נפתחת על השם
   root.querySelector('[data-action="add-ex"]').addEventListener('click', () => {
     plan.exercises.push({ id: newId(), name: '', sets: 3, reps: 10, weight: 0 });
-    save();
+    savePlan();
     renderExercises();
     const inputs = list.querySelectorAll('.ex-name');
     inputs[inputs.length - 1].focus();
