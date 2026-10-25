@@ -28,7 +28,7 @@ function compare(sets, prevSets) {
   return 0;
 }
 
-// השוואה לתכנון: 1 = מעל התכנון, 0 = עמד בתכנון, -1 = מתחת לתכנון, null = אין נתוני תכנון.
+// השוואה לתכנון: 1 = מעל התכנון, 0 = עמד בתכנון, -1 = מתחת לתכנון, null = אין תכנון (התרגיל לא בתוכנית).
 // מתחת: עשית פחות סטים, או סט עם פחות משקל / פחות חזרות ממה שתוכנן.
 // מעל: עמדת בכל התכנון, ובנוסף עשית יותר (סט נוסף, משקל או חזרות)
 function compareToPlan(sets, planned) {
@@ -39,6 +39,13 @@ function compareToPlan(sets, planned) {
   const above = sets.length > planned.sets
     || sets.some((s) => s.weight > planned.weight || s.reps > planned.reps);
   return above ? 1 : 0;
+}
+
+// מה מתוכנן לתרגיל בתוכנית כפי שהיא עכשיו: { sets, reps, weight } או null
+// (null אם התוכנית נמחקה או שהתרגיל כבר לא בה)
+function currentPlanned(planId, key) {
+  const ex = getPlan(planId)?.exercises.find((e) => exerciseKey(e.name) === key);
+  return ex ? { sets: ex.sets, reps: ex.reps, weight: ex.weight } : null;
 }
 
 // כל האימונים שבוצעו, מקובצים לפי סוג אימון.
@@ -63,10 +70,13 @@ export function getPlanHistory() {
         const trend = prev ? compare(ex.sets, prev.sets) : null;
         const streak = trend === -1 ? prev.streak + 1 : 0;
         plan.last.set(key, { sets: ex.sets, date: session.date, streak });
+        // התכנון: מה שנשמר עם האימון. באימונים ישנים (לפני ששמרנו אותו) -
+        // לפי התוכנית כפי שהיא מוגדרת עכשיו בלשונית "תוכניות"
+        const planned = ex.planned || currentPlanned(session.planId, key);
         return {
           name: ex.name, sets: ex.sets, trend, streak, prev,
-          planned: ex.planned || null,
-          vsPlan: compareToPlan(ex.sets, ex.planned),
+          planned,
+          vsPlan: compareToPlan(ex.sets, planned),
         };
       }),
     });
@@ -235,7 +245,7 @@ const VS_PLAN = {
 
 function planBadge(ex) {
   // אימונים שנשמרו לפני שהתחלנו לשמור את התכנון
-  if (ex.vsPlan === null) return '<span class="trend-badge trend-same">אין נתוני תכנון</span>';
+  if (ex.vsPlan === null) return '<span class="trend-badge trend-same">לא בתוכנית</span>';
   const v = VS_PLAN[ex.vsPlan];
   return `<span class="trend-badge ${v.cls}">${icon(v.icon)} ${v.label}</span>`;
 }
@@ -243,7 +253,7 @@ function planBadge(ex) {
 // "עמד ב-2 מתוך 3 תרגילים"
 function planSummary(session) {
   const withPlan = session.exercises.filter((ex) => ex.vsPlan !== null);
-  if (!withPlan.length) return '<span class="muted">אין נתוני תכנון</span>';
+  if (!withPlan.length) return '<span class="muted">התרגילים לא בתוכנית</span>';
   const met = withPlan.filter((ex) => ex.vsPlan >= 0).length;
   const cls = met === withPlan.length ? 'trend-up' : 'trend-down';
   const ic = met === withPlan.length ? 'circle-check' : 'trending-down';

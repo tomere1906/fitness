@@ -156,20 +156,17 @@ export function getSessionsByDate() {
   return [...data.sessions].sort((a, b) => a.date.localeCompare(b.date));
 }
 
-// הפעם האחרונה שעשית תרגיל מסוים: { date, sets } או null.
-// קודם מחפשים באותו סוג אימון, ואם אין - בכל אימון אחר
+// הפעם האחרונה שעשית תרגיל מסוים באותו סוג אימון: { date, sets } או null.
+// רק באותו אימון - גם אם יש תרגיל באותו שם באימון אחר (שם המשקלים יכולים להיות שונים)
 export function getLastPerformance(name, planId) {
   const key = exerciseKey(name);
   if (!key) return null;
-  const sessions = getSessionsByDate().reverse();
-  const find = (list) => {
-    for (const s of list) {
-      const ex = s.exercises.find((e) => exerciseKey(e.name) === key);
-      if (ex && ex.sets.length) return { date: s.date, sets: ex.sets };
-    }
-    return null;
-  };
-  return find(sessions.filter((s) => s.planId === planId)) || find(sessions);
+  const sessions = getSessionsByDate().reverse().filter((s) => s.planId === planId);
+  for (const s of sessions) {
+    const ex = s.exercises.find((e) => exerciseKey(e.name) === key);
+    if (ex && ex.sets.length) return { date: s.date, sets: ex.sets };
+  }
+  return null;
 }
 
 // ===== גיבוי =====
