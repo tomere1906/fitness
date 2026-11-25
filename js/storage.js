@@ -146,6 +146,16 @@ export function addSession(session) {
   save();
 }
 
+// אימון שמור אחד (לעריכה). שינויים בו נשמרים עם save()
+export function getSession(id) {
+  return data.sessions.find((s) => s.id === id);
+}
+
+export function deleteSession(id) {
+  data.sessions = data.sessions.filter((s) => s.id !== id);
+  save();
+}
+
 // התרגיל מזוהה לפי השם, בלי הבדל בין רווחים או אותיות גדולות/קטנות
 export function exerciseKey(name) {
   return name.trim().replace(/\s+/g, ' ').toLowerCase();

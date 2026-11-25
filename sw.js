@@ -7,7 +7,7 @@
 // כך עדכון מגיע כבר בפתיחה הבאה, ובחדר כושר בלי קליטה הכול עדיין עובד.
 
 // גרסת האפליקציה. בכל עדכון מעלים אותה - גם כאן וגם ב-js/version.js
-const VERSION = '1.7';
+const VERSION = '1.8';
 const CACHE = `fitness-app-${VERSION}`;
 
 // אתרים חיצוניים שמותר לשמור מהם עותק (הפונט Inter)
@@ -32,6 +32,7 @@ const FILES = [
   './js/workout.js',
   './js/history.js',
   './js/backup.js',
+  './js/session-edit.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',

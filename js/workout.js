@@ -4,7 +4,7 @@ import {
   addSession, getLastPerformance, newId, exerciseKey,
 } from './storage.js';
 import {
-  esc, fmtNum, toast, stepper, bindSteppers, shortDate, icon, iconChip, screenHead, emptyCard, confirmDialog, alertDialog,
+  esc, fmtNum, toast, stepper, bindSteppers, shortDate, icon, iconChip, screenHead, emptyCard, confirmDialog, alertDialog, choiceDialog,
 } from './ui.js';
 import { currentDeclineStreak, DECLINE_ALERT } from './history.js';
 
@@ -255,23 +255,40 @@ export function renderWorkout(root) {
   });
 }
 
+// גולל אל הסט הראשון שעוד לא סומן, ומדגיש אותו לרגע
+function jumpToFirstOpenSet() {
+  const row = document.querySelector('.set-row:not(.done)');
+  if (!row) return;
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  row.classList.remove('highlight');
+  void row.offsetWidth; // מאפשר להפעיל את האנימציה שוב גם אם כבר הודגש קודם
+  row.classList.add('highlight');
+}
+
 async function finishWorkout(w) {
   const all = w.exercises.flatMap((ex) => ex.sets);
   const done = all.filter((s) => s.done).length;
 
   if (done === 0) {
     await alertDialog('עוד לא סימנת אף סט', 'לחץ על מספר הסט כדי לסמן אותו כבוצע.');
+    jumpToFirstOpenSet();
     return;
   }
   if (done < all.length) {
-    const ok = await confirmDialog({
-      title: 'לשמור את האימון?',
-      message: `סימנת ${done} מתוך ${all.length} סטים. יישמרו רק הסטים שסימנת.`,
-      confirmText: 'שמור',
-      cancelText: 'חזור לאימון',
-      iconName: 'circle-check',
+    const open = all.length - done;
+    const choice = await choiceDialog({
+      title: open === 1 ? 'נשאר סט אחד לא מסומן' : `נשארו ${open} סטים לא מסומנים`,
+      message: 'לקפוץ לסט הראשון שלא סימנת, או לשמור רק את מה שסימנת?',
+      iconName: 'triangle-alert',
+      color: 'orange',
+      choices: [
+        { id: 'jump', text: 'קח אותי לשם', style: 'primary' },
+        { id: 'save', text: 'שמור רק מה שסימנתי', style: 'secondary' },
+        { id: 'back', text: 'ביטול', style: 'ghost' },
+      ],
     });
-    if (!ok) return;
+    if (choice === 'jump') jumpToFirstOpenSet();
+    if (choice !== 'save') return;
   }
 
   addSession({

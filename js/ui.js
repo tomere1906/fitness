@@ -138,23 +138,23 @@ export function toast(message, iconName = 'circle-check') {
 
 // ===== חלון דיאלוג בעיצוב האפליקציה =====
 // מחליף את confirm() / alert() של הדפדפן, שנראים כמו אתר ולא כמו אפליקציה.
-// מחזיר Promise: true אם לחצו על כפתור האישור, false אם על ביטול.
-// דוגמה: if (await confirmDialog({ title: 'למחוק?', danger: true })) { ... }
-export function confirmDialog({
-  title, message = '', confirmText = 'אישור', cancelText = 'ביטול', danger = false,
-  iconName = danger ? 'triangle-alert' : 'info',
-}) {
+
+// חלון עם כמה כפתורים לבחירה. מחזיר Promise עם ה-id של הכפתור שנלחץ,
+// או null אם סגרו בלחיצה על הרקע (רק כש-dismissible).
+// choices: [{ id, text, style: 'primary' | 'danger' | 'secondary' | 'ghost' }]
+export function choiceDialog({ title, message = '', iconName = 'info', color = 'green', choices, dismissible = true }) {
+  const styles = { primary: 'btn-primary', danger: 'btn-danger-solid', secondary: '', ghost: 'btn-ghost' };
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
     overlay.className = 'dialog-overlay';
     overlay.innerHTML = `
       <div class="dialog" role="dialog" aria-modal="true">
-        ${iconChip(iconName, danger ? 'red' : 'green')}
+        ${iconChip(iconName, color)}
         <div class="dialog-title">${esc(title)}</div>
         ${message ? `<div class="dialog-text">${esc(message)}</div>` : ''}
         <div class="dialog-actions">
-          <button class="btn btn-block ${danger ? 'btn-danger-solid' : 'btn-primary'}" data-result="1">${esc(confirmText)}</button>
-          ${cancelText ? `<button class="btn btn-ghost btn-block" data-result="0">${esc(cancelText)}</button>` : ''}
+          ${choices.map((c) => `
+            <button class="btn btn-block ${styles[c.style || 'secondary']}" data-choice="${c.id}">${esc(c.text)}</button>`).join('')}
         </div>
       </div>`;
 
@@ -164,14 +164,28 @@ export function confirmDialog({
       resolve(result);
     };
     overlay.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-result]');
-      if (btn) close(btn.dataset.result === '1');
-      else if (e.target === overlay && cancelText) close(false); // לחיצה על הרקע = ביטול
+      const btn = e.target.closest('[data-choice]');
+      if (btn) close(btn.dataset.choice);
+      else if (e.target === overlay && dismissible) close(null); // לחיצה על הרקע = ביטול
     });
 
     document.activeElement?.blur(); // סוגר את המקלדת אם הייתה פתוחה
     document.body.appendChild(overlay);
   });
+}
+
+// חלון שאלה: true אם לחצו על כפתור האישור, false אם על ביטול.
+// דוגמה: if (await confirmDialog({ title: 'למחוק?', danger: true })) { ... }
+export async function confirmDialog({
+  title, message = '', confirmText = 'אישור', cancelText = 'ביטול', danger = false,
+  iconName = danger ? 'triangle-alert' : 'info',
+}) {
+  const choices = [{ id: 'yes', text: confirmText, style: danger ? 'danger' : 'primary' }];
+  if (cancelText) choices.push({ id: 'no', text: cancelText, style: 'ghost' });
+  const result = await choiceDialog({
+    title, message, iconName, color: danger ? 'red' : 'green', choices, dismissible: !!cancelText,
+  });
+  return result === 'yes';
 }
 
 // הודעה עם כפתור אחד

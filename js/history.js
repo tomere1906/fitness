@@ -4,41 +4,43 @@ import { getSessionsByDate, getPlan, exerciseKey } from './storage.js';
 import {
   esc, fmtNum, countLabel, shortDate, longDate, icon, iconChip, backLink, screenHead, emptyCard,
 } from './ui.js';
+import { renderSessionEditor } from './session-edit.js';
 
 // אחרי כמה ירידות ברצף מתריעים
 export const DECLINE_ALERT = 2;
 
 // ===== חישוב מגמות =====
 
-// סיכום של תרגיל באימון אחד: המשקל הכבד ביותר וסך החזרות
-function summarize(sets) {
-  return {
-    top: Math.max(...sets.map((s) => s.weight)),
-    reps: sets.reduce((sum, s) => sum + s.reps, 0),
-  };
+// הסט הטוב ביותר בתרגיל: הכי כבד, ובשוויון - הכי הרבה חזרות
+function bestSet(sets) {
+  return sets.reduce((best, s) => (
+    s.weight > best.weight || (s.weight === best.weight && s.reps > best.reps) ? s : best
+  ));
 }
 
-// 1 = עלייה, 0 = יציב, -1 = ירידה.
-// משווים את המשקל הכבד ביותר; אם הוא זהה - את סך החזרות
-function compare(sets, prevSets) {
-  const now = summarize(sets);
-  const before = summarize(prevSets);
-  if (now.top !== before.top) return now.top > before.top ? 1 : -1;
-  if (now.reps !== before.reps) return now.reps > before.reps ? 1 : -1;
+// משווה שני סטים: 1 = הראשון טוב יותר, 0 = שווים, -1 = פחות טוב.
+// קודם המשקל; רק אם המשקל זהה - החזרות
+function compareSet(a, b) {
+  if (a.weight !== b.weight) return a.weight > b.weight ? 1 : -1;
+  if (a.reps !== b.reps) return a.reps > b.reps ? 1 : -1;
   return 0;
 }
 
+// מגמה מול הפעם הקודמת: 1 = עלייה, 0 = יציב, -1 = ירידה.
+// משווים רק את הסט הטוב ביותר. מספר הסטים לא משנה -
+// עלית במשקל ועשית פחות סטים / חזרות = עלייה, לא ירידה
+function compare(sets, prevSets) {
+  return compareSet(bestSet(sets), bestSet(prevSets));
+}
+
 // השוואה לתכנון: 1 = מעל התכנון, 0 = עמד בתכנון, -1 = מתחת לתכנון, null = אין תכנון (התרגיל לא בתוכנית).
-// מתחת: עשית פחות סטים, או סט עם פחות משקל / פחות חזרות ממה שתוכנן.
-// מעל: עמדת בכל התכנון, ובנוסף עשית יותר (סט נוסף, משקל או חזרות)
+// גם כאן הסט הטוב ביותר קובע: משקל גבוה מהמתוכנן = מעל, נמוך = מתחת.
+// אם המשקל והחזרות בדיוק כמו בתכנון - אז בודקים גם אם השלמת את כל הסטים
 function compareToPlan(sets, planned) {
   if (!planned) return null;
-  const below = sets.length < planned.sets
-    || sets.some((s) => s.weight < planned.weight || s.reps < planned.reps);
-  if (below) return -1;
-  const above = sets.length > planned.sets
-    || sets.some((s) => s.weight > planned.weight || s.reps > planned.reps);
-  return above ? 1 : 0;
+  const vsPlan = compareSet(bestSet(sets), planned);
+  if (vsPlan !== 0) return vsPlan;
+  return sets.length < planned.sets ? -1 : 0;
 }
 
 // מה מתוכנן לתרגיל בתוכנית כפי שהיא עכשיו: { sets, reps, weight } או null
@@ -108,7 +110,11 @@ export function currentDeclineStreak(planId, name) {
 
 // ===== המסכים =====
 
-export function renderHistory(root, planId, sessionId) {
+export function renderHistory(root, planId, sessionId, mode) {
+  if (mode === 'edit') {
+    renderSessionEditor(root, decodeURIComponent(planId), sessionId);
+    return;
+  }
   const history = getPlanHistory();
   if (sessionId) renderSession(root, history, decodeURIComponent(planId), sessionId);
   else if (planId) renderPlanSessions(root, history, decodeURIComponent(planId));
@@ -168,6 +174,9 @@ function renderSession(root, history, planId, sessionId) {
   root.innerHTML = `
     ${backLink(`#/history/${encodeURIComponent(planId)}`, esc(plan.name))}
     ${screenHead(longDate(session.date), esc(plan.name))}
+    <a class="btn btn-dashed btn-block edit-session-btn" href="#/history/${encodeURIComponent(planId)}/${session.id}/edit">
+      ${icon('pencil')} ערוך את האימון
+    </a>
     ${session.exercises.map((ex) => `
       <div class="card">
         <div class="row-card session-ex-head">
