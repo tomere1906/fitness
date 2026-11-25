@@ -11,36 +11,43 @@ export const DECLINE_ALERT = 2;
 
 // ===== חישוב מגמות =====
 
-// הסט הטוב ביותר בתרגיל: הכי כבד, ובשוויון - הכי הרבה חזרות
-function bestSet(sets) {
-  return sets.reduce((best, s) => (
-    s.weight > best.weight || (s.weight === best.weight && s.reps > best.reps) ? s : best
-  ));
+// סיכום של תרגיל באימון אחד: המשקל הכבד ביותר, מספר הסטים, וממוצע החזרות לסט
+function summarize(sets) {
+  return {
+    weight: Math.max(...sets.map((s) => s.weight)),
+    sets: sets.length,
+    reps: sets.reduce((sum, s) => sum + s.reps, 0) / sets.length,
+  };
 }
 
-// משווה שני סטים: 1 = הראשון טוב יותר, 0 = שווים, -1 = פחות טוב.
-// קודם המשקל; רק אם המשקל זהה - החזרות
-function compareSet(a, b) {
-  if (a.weight !== b.weight) return a.weight > b.weight ? 1 : -1;
-  if (a.reps !== b.reps) return a.reps > b.reps ? 1 : -1;
+// 1 = עלייה, 0 = יציב, -1 = ירידה. now ו-before הם { weight, sets, reps }.
+// הכללים:
+// - עלית במשקל: עלייה, אלא אם ירדת בכמות הסטים (אז ירידה). ירידה בחזרות לא משנה.
+// - ירדת במשקל: ירידה.
+// - אותו משקל: ירדת בסטים או בחזרות = ירידה; עשית יותר (ולא פחות באף אחד) = עלייה; הכול זהה = יציב.
+function compareSummary(now, before) {
+  const sign = (a, b) => (Math.abs(a - b) < 0.01 ? 0 : Math.sign(a - b));
+  const weight = sign(now.weight, before.weight);
+  const sets = sign(now.sets, before.sets);
+  const reps = sign(now.reps, before.reps);
+
+  if (weight > 0) return sets < 0 ? -1 : 1;
+  if (weight < 0) return -1;
+  if (sets < 0 || reps < 0) return -1;
+  if (sets > 0 || reps > 0) return 1;
   return 0;
 }
 
-// מגמה מול הפעם הקודמת: 1 = עלייה, 0 = יציב, -1 = ירידה.
-// משווים רק את הסט הטוב ביותר. מספר הסטים לא משנה -
-// עלית במשקל ועשית פחות סטים / חזרות = עלייה, לא ירידה
+// מגמה מול הפעם הקודמת
 function compare(sets, prevSets) {
-  return compareSet(bestSet(sets), bestSet(prevSets));
+  return compareSummary(summarize(sets), summarize(prevSets));
 }
 
 // השוואה לתכנון: 1 = מעל התכנון, 0 = עמד בתכנון, -1 = מתחת לתכנון, null = אין תכנון (התרגיל לא בתוכנית).
-// גם כאן הסט הטוב ביותר קובע: משקל גבוה מהמתוכנן = מעל, נמוך = מתחת.
-// אם המשקל והחזרות בדיוק כמו בתכנון - אז בודקים גם אם השלמת את כל הסטים
+// אותם כללים בדיוק, כשה"פעם הקודמת" היא מה שתוכנן
 function compareToPlan(sets, planned) {
   if (!planned) return null;
-  const vsPlan = compareSet(bestSet(sets), planned);
-  if (vsPlan !== 0) return vsPlan;
-  return sets.length < planned.sets ? -1 : 0;
+  return compareSummary(summarize(sets), planned);
 }
 
 // מה מתוכנן לתרגיל בתוכנית כפי שהיא עכשיו: { sets, reps, weight } או null
